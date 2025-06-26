@@ -1,0 +1,466 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-20 12:04:51.537826",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "login_page_tab",
+  "login_page_section",
+  "login_button_background_color",
+  "login_page_button_hover_background_color",
+  "page_background_type",
+  "login_page_background_color",
+  "login_page_background_image",
+  "is_app_details_inside_the_box",
+  "login_page_title",
+  "column_break_umnl",
+  "login_button_text_color",
+  "login_page_button_hover_text_color",
+  "login_box_position",
+  "page_heading_text_color",
+  "login_box_background_color",
+  "navbar_tab",
+  "navbar_section",
+  "navbar_color",
+  "hide_help_button",
+  "hide_app_switcher",
+  "default_app",
+  "column_break_jevx",
+  "navbar_text_color",
+  "hide_search",
+  "buttons_tab",
+  "primary_button_section",
+  "button_background_color",
+  "button_hover_background_color",
+  "column_break_soto",
+  "button_text_color",
+  "button_hover_text_color",
+  "secondary_button_section",
+  "secondary_button_background_color",
+  "secondary_button_hover_background_color",
+  "column_break_mslv",
+  "secondary_button_text_color",
+  "secondary_button_hover_text_color",
+  "body_tab",
+  "main_body_section",
+  "body_background_color",
+  "hide_side_bar",
+  "column_break_ojdd",
+  "main_body_content_box_background_color",
+  "main_body_content_box_text_color",
+  "sidebar_section",
+  "sidebar_background_color",
+  "column_break_wdml",
+  "sidebar_text_color",
+  "table_tab",
+  "list_table_section",
+  "table_head_background_color",
+  "table_body_background_color",
+  "table_hide_like_comment_section",
+  "column_break_xskf",
+  "table_head_text_color",
+  "table_body_text_color",
+  "disable_card_view_on_mobile_view",
+  "disable_flex_card_content_on_mobile_view",
+  "widgets_tab",
+  "number_card_section",
+  "number_card_background_color",
+  "number_card_border_color",
+  "column_break_swjv",
+  "number_card_text_color",
+  "input_tab",
+  "input_background_color",
+  "input_border_color",
+  "column_break_pdaj",
+  "input_text_color",
+  "input_label_color"
+ ],
+ "fields": [
+  {
+   "fieldname": "navbar_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "navbar_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "navbar_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "column_break_jevx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "primary_button_section",
+   "fieldtype": "Section Break",
+   "label": "Primary Button"
+  },
+  {
+   "fieldname": "button_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "button_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "column_break_soto",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "login_button_background_color",
+   "fieldtype": "Color",
+   "label": "Button Background Color"
+  },
+  {
+   "fieldname": "login_page_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "login_button_text_color",
+   "fieldtype": "Color",
+   "label": "Button Text Color"
+  },
+  {
+   "fieldname": "column_break_umnl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "button_hover_text_color",
+   "fieldtype": "Color",
+   "label": "Hover Text Color"
+  },
+  {
+   "fieldname": "button_hover_background_color",
+   "fieldtype": "Color",
+   "label": "Hover Background Color"
+  },
+  {
+   "fieldname": "page_background_type",
+   "fieldtype": "Select",
+   "label": "Page Background Type",
+   "options": "\nColor\nImage"
+  },
+  {
+   "depends_on": "eval:doc.page_background_type == \"Color\"",
+   "fieldname": "login_page_background_color",
+   "fieldtype": "Color",
+   "label": "Page Background Color"
+  },
+  {
+   "depends_on": "eval:doc.page_background_type == \"Image\"",
+   "fieldname": "login_page_background_image",
+   "fieldtype": "Attach Image",
+   "label": "Page Background Image",
+   "make_attachment_public": 1
+  },
+  {
+   "default": "Default",
+   "fieldname": "login_box_position",
+   "fieldtype": "Select",
+   "label": "Login Box Position",
+   "options": "Default\nLeft\nRight"
+  },
+  {
+   "fieldname": "login_page_button_hover_background_color",
+   "fieldtype": "Color",
+   "label": "Button Hover Background Color"
+  },
+  {
+   "fieldname": "login_page_button_hover_text_color",
+   "fieldtype": "Color",
+   "label": "Button Hover Text Color"
+  },
+  {
+   "fieldname": "page_heading_text_color",
+   "fieldtype": "Color",
+   "label": "Heading Text Color"
+  },
+  {
+   "fieldname": "login_box_background_color",
+   "fieldtype": "Color",
+   "label": "Box Background Color"
+  },
+  {
+   "fieldname": "main_body_section",
+   "fieldtype": "Section Break",
+   "label": "Main Body"
+  },
+  {
+   "fieldname": "body_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "secondary_button_section",
+   "fieldtype": "Section Break",
+   "label": "Secondary Button"
+  },
+  {
+   "fieldname": "secondary_button_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "column_break_mslv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "secondary_button_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "secondary_button_hover_background_color",
+   "fieldtype": "Color",
+   "label": "Hover Background Color"
+  },
+  {
+   "fieldname": "secondary_button_hover_text_color",
+   "fieldtype": "Color",
+   "label": "Hover Text Color"
+  },
+  {
+   "fieldname": "main_body_content_box_background_color",
+   "fieldtype": "Color",
+   "label": "Content Box Background Color"
+  },
+  {
+   "fieldname": "column_break_ojdd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "list_table_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "table_head_background_color",
+   "fieldtype": "Color",
+   "label": "Head Background Color"
+  },
+  {
+   "fieldname": "table_body_background_color",
+   "fieldtype": "Color",
+   "label": "Body Background Color"
+  },
+  {
+   "fieldname": "table_head_text_color",
+   "fieldtype": "Color",
+   "label": "Head Text Color"
+  },
+  {
+   "fieldname": "table_body_text_color",
+   "fieldtype": "Color",
+   "label": "Body Text Color"
+  },
+  {
+   "fieldname": "column_break_xskf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "widgets_tab",
+   "fieldtype": "Tab Break",
+   "label": "Widgets"
+  },
+  {
+   "fieldname": "number_card_section",
+   "fieldtype": "Section Break",
+   "label": "Number Card"
+  },
+  {
+   "fieldname": "number_card_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "number_card_border_color",
+   "fieldtype": "Color",
+   "label": "Border Color"
+  },
+  {
+   "fieldname": "number_card_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "column_break_swjv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "login_page_tab",
+   "fieldtype": "Tab Break",
+   "label": "Login Page"
+  },
+  {
+   "fieldname": "navbar_tab",
+   "fieldtype": "Tab Break",
+   "label": "Navbar"
+  },
+  {
+   "fieldname": "buttons_tab",
+   "fieldtype": "Tab Break",
+   "label": "Buttons"
+  },
+  {
+   "fieldname": "body_tab",
+   "fieldtype": "Tab Break",
+   "label": "Body"
+  },
+  {
+   "fieldname": "table_tab",
+   "fieldtype": "Tab Break",
+   "label": "Table"
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_help_button",
+   "fieldtype": "Check",
+   "label": "Hide Help Button"
+  },
+  {
+   "default": "0",
+   "fieldname": "table_hide_like_comment_section",
+   "fieldtype": "Check",
+   "label": "Hide Like Comment Section"
+  },
+  {
+   "default": "0",
+   "fieldname": "disable_card_view_on_mobile_view",
+   "fieldtype": "Check",
+   "label": "Disable card view on mobile view"
+  },
+  {
+   "fieldname": "input_tab",
+   "fieldtype": "Tab Break",
+   "label": "Input"
+  },
+  {
+   "fieldname": "input_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "input_border_color",
+   "fieldtype": "Color",
+   "label": "Border Color"
+  },
+  {
+   "fieldname": "input_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "input_label_color",
+   "fieldtype": "Color",
+   "label": "Label Color"
+  },
+  {
+   "fieldname": "column_break_pdaj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_app_details_inside_the_box",
+   "fieldtype": "Check",
+   "label": "Is App Logo Inside The Box"
+  },
+  {
+   "description": "Warning:This field accepts 30 characters only",
+   "fieldname": "login_page_title",
+   "fieldtype": "Data",
+   "label": "Login Page Title",
+   "length": 30
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_side_bar",
+   "fieldtype": "Check",
+   "label": "Collapse Left Side Bar"
+  },
+  {
+   "description": "Hide search box for user roles",
+   "fieldname": "hide_search",
+   "fieldtype": "Table MultiSelect",
+   "label": "Hide Search ",
+   "options": "Has Role"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.disable_card_view_on_mobile_view == 0",
+   "fieldname": "disable_flex_card_content_on_mobile_view",
+   "fieldtype": "Check",
+   "label": "Disable flex card content on mobile view"
+  },
+  {
+   "fieldname": "main_body_content_box_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
+  },
+  {
+   "fieldname": "sidebar_section",
+   "fieldtype": "Section Break",
+   "label": "Sidebar"
+  },
+  {
+   "fieldname": "sidebar_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "column_break_wdml",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sidebar_text_color",
+   "fieldtype": "Color",
+   "label": "Sidebar Text Color"
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_app_switcher",
+   "fieldtype": "Check",
+   "label": "Hide App Switcher"
+  },
+  {
+   "depends_on": "eval:doc.hide_app_switcher == 1",
+   "description": "Select default app when app switcher is hidden. Required when app switcher is hidden.",
+   "fieldname": "default_app",
+   "fieldtype": "Select",
+   "label": "Default App",
+   "mandatory_depends_on": "eval:doc.hide_app_switcher == 1"
+  }
+ ],
+ "grid_page_length": 50,
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-06-26 12:58:37.343023",
+ "modified_by": "Administrator",
+ "module": "Frappe Desk Theme",
+ "name": "Desk Theme",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

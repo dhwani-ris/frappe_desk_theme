@@ -1,0 +1,359 @@
+/**
+ * Frappe Desk Theme - Custom CSS Styling
+ * 
+ * This stylesheet provides comprehensive theming support for Frappe Desk through CSS custom properties.
+ * It covers login page customization, navigation styling, form elements, tables, widgets, and responsive design.
+ * 
+ * The theme system works by:
+ * 1. JavaScript sets CSS custom properties (--variable-name) based on theme configuration
+ * 2. CSS rules use these variables with var() function for dynamic styling
+ * 3. Fallback values ensure functionality when theme data is unavailable
+ */
+
+/* ========================================
+   ROOT VARIABLES & GLOBAL SETTINGS
+   ======================================== */
+
+:root {
+    /* Global layout constraints - ensures content fits properly in all screen sizes */
+    --page-max-width: 100% !important;
+}
+
+/* ========================================
+   LOGIN PAGE STYLING
+   ======================================== */
+
+/* Main login page container - supports custom backgrounds and full viewport height */
+#page-login {
+    background: var(--login-bg-color, transparent);
+    background-image: var(--login-bg-image, none) !important;
+    background-size: cover;
+    height: 100vh;
+}
+
+/* Login form buttons - primary action buttons with hover states */
+.btn-primary.btn-login,
+.btn-primary.btn-forgot {
+    background-color: var(--login-btn-bg, #171717);
+    color: var(--login-btn-color, #fff);
+}
+
+/* Login button hover effects - provides visual feedback on interaction */
+.btn-primary.btn-login:hover,
+.btn-primary.btn-forgot:hover {
+    background-color: var(--login-btn-hover-bg, #171717);
+    color: var(--login-btn-hover-color, #fff);
+}
+
+/* Form input fields - customizable appearance for text inputs */
+.form-control {
+    background-color: var(--input-bg, #f3f3f3);
+    color: var(--input-color, #383838);
+    border: 2px solid var(--input-border, #f3f3f3);
+}
+
+/* Form field labels - customizable text color for better contrast */
+label.control-label {
+    color: var(--input-label-color, #383838);
+}
+
+/* Login form container - supports absolute positioning (Left/Right/Center) */
+.for-login {
+    position: var(--login-box-position, static);
+    right: var(--login-box-right, auto);
+    left: var(--login-box-left, auto);
+    top: var(--login-box-top, 18%);
+    background-color: var(--login-box-bg-override, transparent) !important;
+    border-radius: var(--login-box-border-radius, 0) !important;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transform: translateY(20px);
+    /* Fallback animation - show login box after 1 second if JavaScript fails */
+    animation: showLoginFallback 0.2s ease-in-out 1s forwards;
+}
+
+/* Show login box after theme is applied */
+.for-login.theme-ready {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none; /* Disable fallback animation when theme is ready */
+}
+
+/* Fallback keyframe animation to prevent login box from staying hidden */
+@keyframes showLoginFallback {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Login form card - inner container with padding and width controls */
+.login-content.page-card {
+    background-color: var(--login-box-bg,#fff) !important;
+    border: 2px solid var(--login-box-bg,#fff) !important;
+    width: var(--login-box-width,400px);
+    padding: var(--login-box-padding);
+}
+
+/* Login content border - customizable border for form container */
+.login-content {
+    border: var(--login-content-border,none);
+}
+
+/* Default login page title - can be hidden when custom title is used */
+.for-login .page-card-head h4 {
+    display: var(--login-title-display);
+}
+
+/* Custom login page title - uses CSS ::after pseudo-element for dynamic content */
+.for-login .page-card-head:after {
+    display: var(--login-title-after-display);
+    justify-content: var(--login-title-after-justify);
+    margin-top: var(--login-title-after-margin);
+    content: var(--login-title-after-content);
+    color: var(--login-title-after-color);
+}
+
+/* Page headings - consistent styling for all page titles */
+.page-card-head h4 {
+    color: var(--page-heading-color) !important;
+} 
+
+/* ========================================
+   NAVIGATION BAR STYLING
+   ======================================== */
+
+/* Main navigation bar - top-level container with custom background */
+.navbar {
+    background-color: var(--navbar-bg, #fff);
+}
+
+/* Navbar text elements - brand name and container text color */
+.navbar.container,
+.navbar-brand {
+    color: var(--navbar-color, #555);
+}
+
+/* Navbar icons and toggle button - ensures consistent coloring for SVG elements */
+.navbar-toggler,
+.navbar-toggler span svg,
+.navbar svg.es-icon.icon-sm use,
+.notifications-seen > .es-icon {
+    fill: var(--navbar-color);
+    stroke-width: 0;
+}
+
+/* Mobile menu toggle button - border color for hamburger menu */
+button.navbar-toggler {
+    border-color: var(--navbar-color) !important;
+}
+
+/* Breadcrumb navigation links - maintains consistent color scheme */
+#navbar-breadcrumbs li a {
+    color: var(--navbar-color);
+}
+
+/* Breadcrumb separators - adds arrow separators between breadcrumb items */
+#navbar-breadcrumbs li a::before {
+    content: '›';
+}
+
+/* Disabled breadcrumb items - styling for non-clickable breadcrumb elements */
+#navbar-breadcrumbs li.disabled a {
+    color: var(--navbar-color) !important;
+}
+
+/* Navigation link buttons - text and icon color consistency */
+.btn-reset.nav-link span {
+    color: var(--navbar-color) !important;
+}
+
+/* Navigation link icons - ensures SVG icons match navbar color scheme */
+.btn-reset.nav-link span svg,
+.btn-reset.nav-link span svg use {
+    stroke: var(--navbar-color) !important;
+    fill: var(--navbar-color) !important;
+}
+
+/* ========================================
+   BUTTON STYLING
+   ======================================== */
+
+/* Primary buttons - main action buttons throughout the application */
+.btn-primary,
+.btn-primary:active {
+    background-color: var(--btn-primary-bg,#171717) !important;
+}
+
+/* Primary button text - ensures text visibility on custom backgrounds */
+.btn-primary span,
+.btn-primary:active span {
+    color: var(--btn-primary-color) !important;
+}
+
+/* Primary button hover state - provides visual feedback on mouse over */
+.btn-primary:hover {
+    background-color: var(--btn-primary-hover-bg);
+}
+
+/* Primary button hover text - maintains readability during hover state */
+.btn-primary:hover span {
+    color: var(--btn-primary-hover-color);
+}
+
+/* Secondary/default buttons - alternative action buttons with distinct styling */
+.btn.btn-default.ellipsis,
+.btn-default,
+.btn-default:active {
+    background-color: var(--btn-secondary-bg,#f3f3f3);
+    color: var(--btn-secondary-color);
+}
+
+/* Secondary button hover effects - consistent interaction feedback */
+.btn.btn-default.ellipsis:hover,
+.btn-default:hover {
+    background-color: var(--btn-secondary-hover-bg,#f3f3f3);
+    color: var(--btn-secondary-hover-color);
+}
+
+/* ========================================
+   MAIN CONTENT AREA STYLING
+   ======================================== */
+
+/* Body background - sets overall page background color */
+body {
+    background-color: var(--body-bg,#fff);
+}
+
+/* Page containers - main content wrapper background */
+.content.page-container,
+.page-head {
+    background-color: var(--body-bg,#fff);
+}
+
+/* Content sections - form layouts and main content areas with rounded corners */
+.layout-main-section,
+.form-layout,
+.layout-main,
+.form-page,
+.nav.form-tabs,
+.row.form-section.card-section.visible-section {
+    background-color: var(--content-bg) !important;
+    border-radius: 10px;
+    color: var(--content-text-color) !important;
+}
+
+/* ========================================
+   SIDEBAR STYLING
+   ======================================== */
+
+/* Main sidebar container - left navigation panel with custom background */
+.body-sidebar {
+    background-color: var(--sidebar-bg,#f8f8f8) !important;
+    color: var(--sidebar-text-color,#525252) !important;
+}
+
+/* Sidebar items - all text elements in sidebar navigation */
+.standard-sidebar-item,
+.item-anchor,
+.sidebar-item-label,
+.sidebar-item-icon,
+.sidebar-item-icon svg,
+.sidebar-item-control button {
+    color: var(--sidebar-text-color,#525252) !important;
+}
+
+/* Sidebar icons - SVG elements with proper fill and stroke colors */
+.sidebar-item-icon svg {
+    fill: var(--sidebar-bg,#f8f8f8) !important;
+    stroke: var(--sidebar-text-color,#525252) !important;
+}
+
+/* ========================================
+   TABLE STYLING
+   ======================================== */
+
+/* Table headers - column headers with custom background and text colors */
+.level.list-row-head.text-muted {
+    background-color: var(--table-head-bg);
+}
+
+/* Table header content - text elements in table headers */
+.level-left.list-header-subject,
+span.level-item,
+div.level-right {
+    color: var(--table-head-color);
+}
+
+/* Table rows - data rows with customizable background and text colors */
+.level.list-row,
+.level-item.bold.ellipsis a,
+.filterable.ellipsis {
+    background-color: var(--table-body-bg);
+    color: var(--table-body-color);
+}
+
+/* ========================================
+   CONDITIONAL ELEMENT VISIBILITY
+   ======================================== */
+
+/* Social interaction elements - like buttons and comment counts (conditionally hidden) */
+.like-icon,
+.comment-count,
+.level-item.list-row-activity .mx-2  {
+    display: var(--hide-like-comment, block) !important;
+}
+
+/* Help buttons - assistance elements that can be hidden based on theme settings */
+.d-lg-block,
+.d-sm-block {
+    display: var(--hide-help, block) !important;
+}
+
+/* App switcher - navigation dropdown that can be hidden based on theme settings */
+.sidebar-item-control{
+    display: var(--hide-app-switcher, block) !important;
+}
+
+/* App switcher anchor - disable clicking when app switcher is hidden */
+.app-switcher-dropdown {
+    pointer-events: var(--app-switcher-pointer-events, auto) !important;
+}
+
+
+/* ========================================
+   WIDGET/CARD STYLING
+   ======================================== */
+
+/* Number widgets - dashboard widgets and statistical cards */
+.widget.number-widget-box {
+    background-color: var(--widget-bg);
+    border: 2px solid var(--widget-border);
+}
+
+/* Widget content - all text elements within widgets */
+.widget-head,
+.widget-label,
+.widget-title,
+.widget-body,
+.widget-content div.number {
+    color: var(--widget-color);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Mobile breakpoint - adjustments for smaller screens */
+@media (max-width: 768px) {
+    /* Login form positioning - removes absolute positioning on mobile */
+    .for-login {
+        position: static;
+    }
+    
+    /* Login form width - allows full width on mobile devices */
+    .login-content.page-card {
+        width: auto;
+    }
+}
+
