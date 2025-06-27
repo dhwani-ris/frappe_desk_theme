@@ -58,13 +58,17 @@ label.control-label {
 }
 
 /* Login form container - supports absolute positioning (Left/Right/Center) */
-.for-login {
+.for-login,.for-signup,.for-forgot, .for-login-with-email-link {
     position: var(--login-box-position, static);
     right: var(--login-box-right, auto);
     left: var(--login-box-left, auto);
     top: var(--login-box-top, 18%);
     background-color: var(--login-box-bg-override, transparent) !important;
     border-radius: var(--login-box-border-radius, 0) !important;
+}
+
+/* Login animation - only for login forms */
+.for-login {
     opacity: 0;
     transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
     transform: translateY(20px);
@@ -88,7 +92,7 @@ label.control-label {
 }
 
 /* Login form card - inner container with padding and width controls */
-.login-content.page-card {
+.login-content.page-card, .signup-content.page-card {
     background-color: var(--login-box-bg,#fff) !important;
     border: 2px solid var(--login-box-bg,#fff) !important;
     width: var(--login-box-width,400px);
@@ -96,8 +100,19 @@ label.control-label {
 }
 
 /* Login content border - customizable border for form container */
-.login-content {
+/* .login-content, .forgot-content, .signup-content {
     border: var(--login-content-border,none);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+} */
+
+/* Signup message - when app details are inside the box, make it part of the container */
+.sign-up-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-top: 20px;
+    padding: 0 !important;
+    color: inherit;
 }
 
 /* Default login page title - can be hidden when custom title is used */
@@ -326,9 +341,11 @@ div.level-right {
    ======================================== */
 
 /* Number widgets - dashboard widgets and statistical cards */
-.widget.number-widget-box {
+.widget.number-widget-box,
+.widget.dashboard-widget-box {
     background-color: var(--widget-bg);
     border: 2px solid var(--widget-border);
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
 }
 
 /* Widget content - all text elements within widgets */
