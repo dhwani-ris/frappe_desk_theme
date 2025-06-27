@@ -9,10 +9,12 @@ class FrappeDeskTheme {
         this.themeData = null;
         // Cache configuration
         this.cacheKey = 'frappe_desk_theme_cache';
-        this.cacheTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        this.footerCacheStorageKey = 'frappe_desk_theme_footer_cache';
+        this.cacheTimeout = 30 * 24 * 60 * 60 * 1000; // 30 days (1 month) in milliseconds
         // Footer creation throttling and caching
         this.footerCreating = false;
         this.footerHtmlCache = null;
+        this.footerCacheKey = null; // Track what theme data the footer was cached for
         this.stickyFooterListenerSetup = false;
         this.init();
     }
@@ -37,7 +39,7 @@ class FrappeDeskTheme {
             
             this.setupEventListeners();
         } catch (error) {
-            // Silent fail in production - apply default theme and show login box
+            // Production-ready silent fail - apply default theme and show login box
             this.applyTheme();
             this.showLoginBoxFallback();
         }
@@ -111,7 +113,7 @@ class FrappeDeskTheme {
         const now = Date.now();
         const cacheAge = now - cachedData.timestamp;
         
-        return cacheAge < this.cacheTimeout;
+        return cacheAge < this.cacheTimeout; // 30 days
     }
 
     /**
@@ -174,6 +176,7 @@ class FrappeDeskTheme {
         try {
             // Clear footer cache to ensure fresh data
             this.footerHtmlCache = null;
+            this.footerCacheKey = null;
             
             await this.loadTheme();
             this.applyTheme();
@@ -183,7 +186,48 @@ class FrappeDeskTheme {
                 detail: { themeData: this.themeData }
             }));
         } catch (error) {
-            console.error('Failed to refresh theme:', error);
+            // Silent fail - theme refresh errors should not interrupt user experience
+        }
+    }
+
+    /**
+     * Save footer cache to localStorage
+     */
+    saveFooterCache(footerHtml, cacheKey) {
+        try {
+            const cacheData = {
+                html: footerHtml,
+                key: cacheKey,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(this.footerCacheStorageKey, JSON.stringify(cacheData));
+        } catch (error) {
+            // localStorage might be full or disabled
+        }
+    }
+
+    /**
+     * Load footer cache from localStorage
+     */
+    loadFooterCache() {
+        try {
+            const cached = localStorage.getItem(this.footerCacheStorageKey);
+            if (!cached) return null;
+
+            const cacheData = JSON.parse(cached);
+            const now = Date.now();
+            const cacheAge = now - cacheData.timestamp;
+
+            // Return cached data if it's still valid (within 30-day timeout)
+            if (cacheAge < this.cacheTimeout) {
+                return cacheData;
+            } else {
+                // Remove expired cache
+                localStorage.removeItem(this.footerCacheStorageKey);
+                return null;
+            }
+        } catch (error) {
+            return null;
         }
     }
 
@@ -193,6 +237,10 @@ class FrappeDeskTheme {
     clearCache() {
         try {
             localStorage.removeItem(this.cacheKey);
+            localStorage.removeItem(this.footerCacheStorageKey);
+            // Also clear footer cache
+            this.footerHtmlCache = null;
+            this.footerCacheKey = null;
         } catch (error) {
             // Ignore localStorage errors
         }
@@ -558,10 +606,9 @@ class FrappeDeskTheme {
             try {
                 // Set the current app to the default app (same as breadcrumbs.js line 83)
                 frappe.app.sidebar.apps_switcher.set_current_app(this.themeData.default_app);
-            } catch (error) {
-                // Silent fail if app switcher is not available or app doesn't exist
-                console.warn('Failed to set default app:', error);
-            }
+                    } catch (error) {
+            // Silent fail if app switcher is not available or app doesn't exist
+        }
         }
     }
 
@@ -599,27 +646,45 @@ class FrappeDeskTheme {
         this.footerCreating = true;
 
         try {
+            // Create a cache key from footer-related theme data
+            const currentFooterKey = JSON.stringify({
+                copyright_text: this.themeData.copyright_text,
+                footer_powered_by: this.themeData.footer_powered_by,
+                sticky_footer: this.themeData.sticky_footer
+            });
+
             let footerHtml = this.footerHtmlCache;
             
-            // Only fetch from server if not cached
-            if (!footerHtml) {
-                // Get rendered footer HTML from server
-                const response = await fetch('/api/method/frappe_desk_theme.api.get_footer_html', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
+            // Check in-memory cache first, then localStorage, then API
+            if (!footerHtml || this.footerCacheKey !== currentFooterKey) {
+                // Try to load from localStorage
+                const cachedFooter = this.loadFooterCache();
+                if (cachedFooter && cachedFooter.key === currentFooterKey) {
+                    footerHtml = cachedFooter.html;
+                    this.footerHtmlCache = footerHtml;
+                    this.footerCacheKey = currentFooterKey;
+                } else {
+                    
+                    // Get rendered footer HTML from server
+                    const response = await fetch('/api/method/frappe_desk_theme.api.get_footer_html', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    const data = await response.json();
+                    footerHtml = data?.message || '';
+                    
+                    // Cache the HTML and key for subsequent calls (both memory and localStorage)
+                    this.footerHtmlCache = footerHtml;
+                    this.footerCacheKey = currentFooterKey;
+                    this.saveFooterCache(footerHtml, currentFooterKey);
                 }
-
-                const data = await response.json();
-                footerHtml = data?.message || '';
-                
-                // Cache the HTML for subsequent calls
-                this.footerHtmlCache = footerHtml;
             }
 
             if (footerHtml.trim()) {
@@ -651,7 +716,7 @@ class FrappeDeskTheme {
                 }
             }
         } catch (error) {
-            console.warn('Failed to load footer template:', error);
+            // Silent fail - footer is optional, don't show errors to user
         } finally {
             this.footerCreating = false;
         }
