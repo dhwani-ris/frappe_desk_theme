@@ -74,7 +74,13 @@
   "input_border_color",
   "column_break_pdaj",
   "input_text_color",
-  "input_label_color"
+  "input_label_color",
+  "footer_tab",
+  "footer_section",
+  "copyright_text",
+  "sticky_footer",
+  "column_break_footer",
+  "footer_powered_by"
  ],
  "fields": [
   {
@@ -430,11 +436,44 @@
   },
   {
    "depends_on": "eval:doc.hide_app_switcher == 1",
-   "description": "Select default app when app switcher is hidden. Required when app switcher is hidden.",
+   "description": "Select default app when app switcher is hidden.",
    "fieldname": "default_app",
    "fieldtype": "Select",
    "label": "Default App",
    "mandatory_depends_on": "eval:doc.hide_app_switcher == 1"
+  },
+  {
+   "fieldname": "footer_tab",
+   "fieldtype": "Tab Break",
+   "label": "Footer"
+  },
+  {
+   "fieldname": "footer_section",
+   "fieldtype": "Section Break",
+   "label": "Footer Settings"
+  },
+  {
+   "description": "Copyright text to display in footer",
+   "fieldname": "copyright_text",
+   "fieldtype": "Data",
+   "label": "Copyright Text"
+  },
+  {
+   "default": "0",
+   "description": "Makes footer stick to bottom of screen",
+   "fieldname": "sticky_footer",
+   "fieldtype": "Check",
+   "label": "Sticky Footer"
+  },
+  {
+   "fieldname": "column_break_footer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Custom powered by text for footer",
+   "fieldname": "footer_powered_by",
+   "fieldtype": "Small Text",
+   "label": "Footer \"Powered By\""
   }
  ],
  "grid_page_length": 50,
@@ -442,7 +481,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-26 12:58:37.343023",
+ "modified": "2025-06-27 19:36:22.479301",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",

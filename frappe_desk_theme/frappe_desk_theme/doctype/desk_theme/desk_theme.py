@@ -15,6 +15,28 @@ class DeskTheme(Document):
 		# Update system settings with the selected default app
 		if self.hide_app_switcher and self.default_app:
 			update_system_default_app(self.default_app)
+		
+		# Update website settings with footer information
+		self.update_website_settings()
+
+	def update_website_settings(self):
+		"""Update Website Settings with copyright and powered by text from Desk Theme"""
+		try:
+			website_settings = frappe.get_single("Website Settings")
+			
+			# Update copyright text if provided
+			if self.copyright_text:
+				website_settings.copyright = self.copyright_text
+			
+			# Update footer powered by text if provided
+			if self.footer_powered_by:
+				website_settings.footer_powered = self.footer_powered_by
+			
+			# Save without triggering permissions check
+			website_settings.save(ignore_permissions=True)
+			
+		except Exception as e:
+			frappe.log_error(f"Error updating website settings: {str(e)}")
 
 
 @frappe.whitelist()

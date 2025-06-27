@@ -1,0 +1,22 @@
+{% if copyright_text or footer_powered_by %}
+<div class="desk-footer{% if sticky_footer %} sticky{% endif %}" id="desk-footer">
+    <div class="desk-footer-left">
+        {% if copyright_text %}
+        <span>{{ copyright_text }}</span>
+        {% endif %}
+    </div>
+    <div class="desk-footer-right">
+        {% if footer_powered_by %}
+        <span>{{ footer_powered_by | safe }}</span>
+        {% else %}
+        <span>Built on <a href="https://frappeframework.com" target="_blank">Frappe</a></span>
+        {% endif %}
+    </div>
+</div>
+
+{% if sticky_footer %}
+<script>
+    document.body.classList.add('has-sticky-footer');
+</script>
+{% endif %}
+{% endif %} 

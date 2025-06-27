@@ -374,3 +374,148 @@ div.level-right {
     }
 }
 
+/* ========================================
+   FOOTER STYLING
+   ======================================== */
+
+/* Ensure main-section takes full height for proper footer positioning */
+.main-section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content area should flex to push footer down */
+.main-section > .container,
+.main-section > .page-container {
+    flex: 1;
+}
+
+/* Main footer container - positioned to align with main content area */
+.desk-footer {
+    background-color: var(--footer-bg, #f8f9fa);
+    color: var(--footer-color, #495057);
+    padding: 15px 20px;
+    border-top: 1px solid var(--footer-border, #dee2e6);
+    font-size: 14px;
+    display: var(--footer-display, flex);
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: auto;
+    /* Position footer to align with main content area, not spanning full width */
+    margin-left: 50px; /* Default collapsed sidebar width */
+    transition: margin-left 200ms ease;
+    /* Ensure footer has consistent height */
+    min-height: 50px;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+/* Adjust footer margin when sidebar is expanded */
+.body-sidebar-container.expanded ~ * .desk-footer,
+.body-sidebar-container.expanded + .main-section .desk-footer {
+    margin-left: var(--left-sidebar-width, 220px);
+}
+
+/* Alternative approach: Position footer within main-section if it exists */
+.main-section .desk-footer {
+    margin-left: 0 !important;
+}
+
+/* Sticky footer positioning - aligns with content area */
+.desk-footer.sticky {
+    position: fixed;
+    bottom: 0;
+    left: 50px; /* Default collapsed sidebar width */
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    margin-left: 0;
+    transition: left 200ms ease-in-out;
+    /* Ensure consistent height for sticky footer */
+    height: 50px;
+    box-sizing: border-box;
+}
+
+/* JavaScript will handle dynamic positioning, but keep CSS fallback */
+.body-sidebar-container.expanded ~ * .desk-footer.sticky,
+body[data-sidebar="1"] .desk-footer.sticky {
+    left: 220px; /* Use fixed value instead of CSS variable for better performance */
+}
+
+/* When footer is sticky, add padding to main section to prevent content overlap */
+.main-section.has-sticky-footer,
+body.has-sticky-footer .main-section {
+    padding-bottom: 60px; /* 50px footer height + 10px buffer */
+}
+
+/* Fallback: If main-section doesn't exist, add padding to body */
+body.has-sticky-footer:not(:has(.main-section)) {
+    padding-bottom: 60px;
+}
+
+/* Ensure content doesn't overlap with sticky footer */
+.main-section.has-sticky-footer {
+    min-height: calc(100vh - 60px); /* Full height minus footer and buffer */
+}
+
+/* Footer left section - copyright text */
+.desk-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Footer right section - powered by text */
+.desk-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--footer-powered-color, #6c757d);
+    font-size: 13px;
+}
+
+/* Footer links styling */
+.desk-footer a {
+    color: var(--footer-link-color, #007bff);
+    text-decoration: none;
+}
+
+.desk-footer a:hover {
+    color: var(--footer-link-hover-color, #0056b3);
+    text-decoration: underline;
+}
+
+/* Responsive footer for mobile and tablets */
+@media (max-width: 992px) {
+    /* On mobile/tablet, footer should span full width as sidebar becomes overlay */
+    .desk-footer {
+        margin-left: 0 !important;
+    }
+    
+    .desk-footer.sticky {
+        left: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .desk-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 12px 15px;
+        gap: 8px;
+    }
+    
+    .desk-footer-left,
+    .desk-footer-right {
+        justify-content: center;
+    }
+    
+    .main-section.has-sticky-footer,
+    body.has-sticky-footer .main-section,
+    body.has-sticky-footer:not(:has(.main-section)) {
+        padding-bottom: 70px; /* Reduced padding for mobile */
+    }
+}
+
