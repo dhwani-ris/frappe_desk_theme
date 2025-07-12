@@ -29,6 +29,10 @@
     background-image: var(--login-bg-image, none) !important;
     background-size: cover;
     height: 100vh;
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100vh;
+    margin: 0;
 }
 
 /* Login form buttons - primary action buttons with hover states */
