@@ -359,11 +359,15 @@ class FrappeDeskTheme {
         this.setDefaultCSSVariables();
 
         // Login page background customization
-        if (theme.login_page_background_color) {
-            root.style.setProperty('--login-bg-color', theme.login_page_background_color);
-        }
-        if (theme.login_page_background_image) {
-            root.style.setProperty('--login-bg-image', `url("${theme.login_page_background_image}")`);
+        if (theme.carousel && theme.carousel.images && theme.carousel.images.length > 0) {
+            // Skip static background image/color for carousel mode
+        } else {
+            if (theme.login_page_background_color) {
+                root.style.setProperty('--login-bg-color', theme.login_page_background_color);
+            }
+            if (theme.login_page_background_image) {
+                root.style.setProperty('--login-bg-image', `url("${theme.login_page_background_image}")`);
+            }
         }
         
         // Login box positioning - supports Left, Right, or Default positioning
@@ -541,6 +545,11 @@ class FrappeDeskTheme {
         this.toggleSidebar();
         this.toggleSearchBar();
         this.setDefaultApp();
+        if (this.themeData.carousel && this.themeData.carousel.images && this.themeData.carousel.images.length > 0) {
+            this.renderLoginCarousel();
+        } else {
+            this.removeLoginCarousel();
+        }
         this.showLoginBox();
         this.createFooter();
     }
@@ -817,6 +826,128 @@ class FrappeDeskTheme {
 
     }
 
+    renderLoginCarousel() {
+        // Only on login page
+        const loginPage = document.querySelector('#page-login');
+        if (!loginPage) return;
+        // Remove any existing carousel
+        this.removeLoginCarousel();
+        const images = this.themeData.carousel.images;
+        if (!images || images.length === 0) return;
+        // Create carousel container
+        const carousel = document.createElement('div');
+        carousel.id = 'login-bg-carousel';
+        carousel.style.position = 'absolute';
+        carousel.style.top = '0';
+        carousel.style.left = '0';
+        carousel.style.width = '100%';
+        carousel.style.height = '100%';
+        carousel.style.zIndex = '0';
+        carousel.style.overflow = 'hidden';
+        carousel.style.pointerEvents = 'none';
+        // Add images
+        images.forEach((src, idx) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'carousel-bg-img';
+            img.style.position = 'absolute';
+            img.style.top = '0';
+            img.style.left = '0';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.opacity = idx === 0 ? '1' : '0';
+            img.style.transition = 'opacity 0.7s';
+            img.style.pointerEvents = 'none';
+            carousel.appendChild(img);
+        });
+        // Add navigation if enabled
+        const manual = this.themeData.carousel.manual_navigation !== false;
+        if (manual && images.length > 1) {
+            const left = document.createElement('button');
+            left.innerHTML = '&#8592;';
+            left.className = 'carousel-nav carousel-nav-left';
+            left.style.position = 'absolute';
+            left.style.top = '50%';
+            left.style.left = '20px';
+            left.style.transform = 'translateY(-50%)';
+            left.style.zIndex = '2';
+            left.style.pointerEvents = 'auto';
+            left.style.background = 'rgba(0,0,0,0.3)';
+            left.style.color = '#fff';
+            left.style.border = 'none';
+            left.style.fontSize = '2rem';
+            left.style.cursor = 'pointer';
+            left.style.borderRadius = '50%';
+            left.style.width = '40px';
+            left.style.height = '40px';
+            left.style.display = 'flex';
+            left.style.alignItems = 'center';
+            left.style.justifyContent = 'center';
+            left.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.carouselShowImage(this._carouselIndex - 1);
+            });
+            const right = document.createElement('button');
+            right.innerHTML = '&#8594;';
+            right.className = 'carousel-nav carousel-nav-right';
+            right.style.position = 'absolute';
+            right.style.top = '50%';
+            right.style.right = '20px';
+            right.style.transform = 'translateY(-50%)';
+            right.style.zIndex = '2';
+            right.style.pointerEvents = 'auto';
+            right.style.background = 'rgba(0,0,0,0.3)';
+            right.style.color = '#fff';
+            right.style.border = 'none';
+            right.style.fontSize = '2rem';
+            right.style.cursor = 'pointer';
+            right.style.borderRadius = '50%';
+            right.style.width = '40px';
+            right.style.height = '40px';
+            right.style.display = 'flex';
+            right.style.alignItems = 'center';
+            right.style.justifyContent = 'center';
+            right.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.carouselShowImage(this._carouselIndex + 1);
+            });
+            carousel.appendChild(left);
+            carousel.appendChild(right);
+        }
+        loginPage.insertBefore(carousel, loginPage.firstChild);
+        // Carousel state
+        this._carouselIndex = 0;
+        this._carouselImages = carousel.querySelectorAll('.carousel-bg-img');
+        // Auto-advance
+        if (this._carouselTimer) clearInterval(this._carouselTimer);
+        const auto = this.themeData.carousel.auto_advance !== false;
+        if (auto && images.length > 1) {
+            this._carouselTimer = setInterval(() => {
+                this.carouselShowImage(this._carouselIndex + 1);
+            }, 5000);
+        }
+    }
+
+    removeLoginCarousel() {
+        const existing = document.getElementById('login-bg-carousel');
+        if (existing) existing.remove();
+        if (this._carouselTimer) clearInterval(this._carouselTimer);
+        this._carouselImages = null;
+        this._carouselIndex = 0;
+    }
+
+    carouselShowImage(idx) {
+        if (!this._carouselImages) return;
+        const total = this._carouselImages.length;
+        idx = (idx + total) % total;
+        this._carouselImages.forEach((img, i) => {
+            img.style.opacity = i === idx ? '1' : '0';
+        });
+        this._carouselIndex = idx;
+    }
 }
 
 // Initialize theme system when DOM is ready

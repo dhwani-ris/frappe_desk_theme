@@ -10,6 +10,8 @@
   "login_button_background_color",
   "login_page_button_hover_background_color",
   "page_background_type",
+  "allow_manual_navigation",
+  "carousel_images",
   "login_page_background_color",
   "login_page_background_image",
   "is_app_details_inside_the_box",
@@ -152,7 +154,7 @@
    "fieldname": "page_background_type",
    "fieldtype": "Select",
    "label": "Page Background Type",
-   "options": "\nColor\nImage"
+   "options": "\nColor\nImage\nCarousel"
   },
   {
    "depends_on": "eval:doc.page_background_type == \"Color\"",
@@ -474,6 +476,21 @@
    "fieldname": "footer_powered_by",
    "fieldtype": "Small Text",
    "label": "Footer \"Powered By\""
+  },
+  {
+   "depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "fieldname": "carousel_images",
+   "fieldtype": "Table",
+   "label": "Carousel Images",
+   "mandatory_depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "options": "Desk Theme Carousel Images"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "fieldname": "allow_manual_navigation",
+   "fieldtype": "Check",
+   "label": "Allow Manual Navigation"
   }
  ],
  "grid_page_length": 50,
@@ -481,7 +498,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-27 19:36:22.479301",
+ "modified": "2025-07-21 18:13:14.615451",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",
