@@ -13,6 +13,7 @@
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Image",
+   "make_attachment_public": 1,
    "reqd": 1
   }
  ],
@@ -20,7 +21,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-21 18:10:28.202655",
+ "modified": "2025-07-21 19:32:26.277666",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme Carousel Images",
