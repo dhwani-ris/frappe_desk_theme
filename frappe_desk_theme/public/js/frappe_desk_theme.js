@@ -862,7 +862,7 @@ class FrappeDeskTheme {
             carousel.appendChild(img);
         });
         // Add navigation if enabled
-        const manual = this.themeData.carousel.manual_navigation !== false;
+        const manual = !!this.themeData.carousel.manual_navigation;
         if (manual && images.length > 1) {
             const left = document.createElement('button');
             left.innerHTML = '&#8592;';

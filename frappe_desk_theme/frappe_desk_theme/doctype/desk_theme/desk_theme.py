@@ -52,7 +52,7 @@ class DeskTheme(Document):
 		images = [img.image for img in self.carousel_images if img.image]
 		return {
 			"images": images,
-			"manual_navigation": getattr(self, "carousel_manual_navigation", True),
+			"manual_navigation": getattr(self, "allow_manual_navigation", True),
 			"auto_advance": getattr(self, "carousel_auto_advance", True),
 		}
 
