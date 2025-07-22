@@ -292,8 +292,7 @@ class FrappeDeskTheme {
             '--navbar-toggler-border', '--breadcrumb-disabled-color', '--help-nav-link-color', '--help-nav-link-stroke',
             '--hide-app-switcher', '--app-switcher-pointer-events', '--footer-bg', '--footer-color', '--footer-border',
             '--footer-display', '--footer-powered-color', '--footer-link-color', '--footer-link-hover-color',
-            '--carousel-nav-bg', '--carousel-nav-color', '--carousel-nav-size', '--carousel-nav-radius', '--carousel-nav-z',
-            '--carousel-fade-opacity'
+            '--carousel-fade-opacity', '--login-bg-carousel-image'
         ];
 
         // Remove each CSS variable from document root
@@ -344,12 +343,6 @@ class FrappeDeskTheme {
         root.style.setProperty('--footer-link-color', '#007bff');
         root.style.setProperty('--footer-link-hover-color', '#0056b3');
 
-        // Carousel nav button defaults
-        root.style.setProperty('--carousel-nav-bg', 'rgba(0,0,0,0.3)');
-        root.style.setProperty('--carousel-nav-color', '#fff');
-        root.style.setProperty('--carousel-nav-size', '2rem');
-        root.style.setProperty('--carousel-nav-radius', '50%');
-        root.style.setProperty('--carousel-nav-z', '2');
         // Carousel fade default
         root.style.setProperty('--carousel-fade-opacity', '1');
     }
@@ -544,23 +537,6 @@ class FrappeDeskTheme {
         // Sidebar visibility control
         if (theme.hide_side_bar !== undefined) {
             root.style.setProperty('--sidebar-expanded', theme.hide_side_bar === 0 ? 'expanded' : '');
-        }
-
-        // Carousel nav button theming
-        if (theme.carousel_nav_bg) {
-            root.style.setProperty('--carousel-nav-bg', theme.carousel_nav_bg);
-        }
-        if (theme.carousel_nav_color) {
-            root.style.setProperty('--carousel-nav-color', theme.carousel_nav_color);
-        }
-        if (theme.carousel_nav_size) {
-            root.style.setProperty('--carousel-nav-size', theme.carousel_nav_size);
-        }
-        if (theme.carousel_nav_radius) {
-            root.style.setProperty('--carousel-nav-radius', theme.carousel_nav_radius);
-        }
-        if (theme.carousel_nav_z) {
-            root.style.setProperty('--carousel-nav-z', theme.carousel_nav_z);
         }
     }
 
