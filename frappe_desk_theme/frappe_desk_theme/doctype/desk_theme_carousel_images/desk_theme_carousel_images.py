@@ -10,5 +10,5 @@ class DeskThemeCarouselImages(Document):
         # Validate image size (max 5 MB)
         if self.image:
             file_doc = frappe.get_doc('File', {'file_url': self.image})
-            if file_doc.file_size > 5 * 1024 * 1024:
-                frappe.throw('Carousel image size must be 5 MB or less.')
+            if file_doc.file_size > 1 * 1024 * 1024:
+                frappe.throw('Carousel image size must be 1 MB or less.')
