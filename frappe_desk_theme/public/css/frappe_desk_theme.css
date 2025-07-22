@@ -35,6 +35,21 @@
     margin: 0;
 }
 
+#page-login::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--login-bg-carousel-image, var(--login-bg-image, none));
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    opacity: var(--carousel-fade-opacity, 1);
+    transition: opacity 0.7s;
+}
+
+
 /* Login form buttons - primary action buttons with hover states */
 .btn-primary.btn-login,
 .btn-primary.btn-forgot {
@@ -521,5 +536,32 @@ body.has-sticky-footer:not(:has(.main-section)) {
     body.has-sticky-footer:not(:has(.main-section)) {
         padding-bottom: 70px; /* Reduced padding for mobile */
     }
+}
+
+.carousel-nav {
+    background: var(--carousel-nav-bg, rgba(0,0,0,0.3));
+    color: var(--carousel-nav-color, #fff);
+    border: none;
+    font-size: var(--carousel-nav-size, 2rem);
+    cursor: pointer;
+    border-radius: var(--carousel-nav-radius, 50%);
+    width: var(--carousel-nav-size, 2rem);
+    height: var(--carousel-nav-size, 2rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: var(--carousel-nav-z, 2);
+    pointer-events: auto;
+}
+
+.carousel-nav-left {
+    left: 20px;
+}
+
+.carousel-nav-right {
+    right: 20px;
 }
 

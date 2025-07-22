@@ -291,7 +291,9 @@ class FrappeDeskTheme {
             '--login-box-top', '--login-box-bg-override', '--login-box-border-radius', '--search-bar-display',
             '--navbar-toggler-border', '--breadcrumb-disabled-color', '--help-nav-link-color', '--help-nav-link-stroke',
             '--hide-app-switcher', '--app-switcher-pointer-events', '--footer-bg', '--footer-color', '--footer-border',
-            '--footer-display', '--footer-powered-color', '--footer-link-color', '--footer-link-hover-color'
+            '--footer-display', '--footer-powered-color', '--footer-link-color', '--footer-link-hover-color',
+            '--carousel-nav-bg', '--carousel-nav-color', '--carousel-nav-size', '--carousel-nav-radius', '--carousel-nav-z',
+            '--carousel-fade-opacity'
         ];
 
         // Remove each CSS variable from document root
@@ -341,6 +343,15 @@ class FrappeDeskTheme {
         root.style.setProperty('--footer-powered-color', '#6c757d');
         root.style.setProperty('--footer-link-color', '#007bff');
         root.style.setProperty('--footer-link-hover-color', '#0056b3');
+
+        // Carousel nav button defaults
+        root.style.setProperty('--carousel-nav-bg', 'rgba(0,0,0,0.3)');
+        root.style.setProperty('--carousel-nav-color', '#fff');
+        root.style.setProperty('--carousel-nav-size', '2rem');
+        root.style.setProperty('--carousel-nav-radius', '50%');
+        root.style.setProperty('--carousel-nav-z', '2');
+        // Carousel fade default
+        root.style.setProperty('--carousel-fade-opacity', '1');
     }
 
     /**
@@ -533,6 +544,23 @@ class FrappeDeskTheme {
         // Sidebar visibility control
         if (theme.hide_side_bar !== undefined) {
             root.style.setProperty('--sidebar-expanded', theme.hide_side_bar === 0 ? 'expanded' : '');
+        }
+
+        // Carousel nav button theming
+        if (theme.carousel_nav_bg) {
+            root.style.setProperty('--carousel-nav-bg', theme.carousel_nav_bg);
+        }
+        if (theme.carousel_nav_color) {
+            root.style.setProperty('--carousel-nav-color', theme.carousel_nav_color);
+        }
+        if (theme.carousel_nav_size) {
+            root.style.setProperty('--carousel-nav-size', theme.carousel_nav_size);
+        }
+        if (theme.carousel_nav_radius) {
+            root.style.setProperty('--carousel-nav-radius', theme.carousel_nav_radius);
+        }
+        if (theme.carousel_nav_z) {
+            root.style.setProperty('--carousel-nav-z', theme.carousel_nav_z);
         }
     }
 
@@ -826,127 +854,113 @@ class FrappeDeskTheme {
 
     }
 
+    // Navigation buttons
+    
+    ensureButton(loginPage, images, id, html, onClick) {
+        const manual = !!this.themeData.carousel.manual_navigation;
+        let btn = document.getElementById(id);
+        if (!manual || images.length <= 1) {
+            if (btn) btn.remove();
+            return null;
+        }
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = id;
+            btn.className = `carousel-nav ${id === 'carousel-nav-left' ? 'carousel-nav-left' : 'carousel-nav-right'}`;
+            btn.innerHTML = html;
+            btn.addEventListener('click', onClick);
+            loginPage.appendChild(btn);
+        }
+        return btn;
+    };
+
     renderLoginCarousel() {
-        // Only on login page
         const loginPage = document.querySelector('#page-login');
         if (!loginPage) return;
-        // Remove any existing carousel
-        this.removeLoginCarousel();
+        const root = document.documentElement;
         const images = this.themeData.carousel.images;
         if (!images || images.length === 0) return;
-        // Create carousel container
-        const carousel = document.createElement('div');
-        carousel.id = 'login-bg-carousel';
-        carousel.style.position = 'absolute';
-        carousel.style.top = '0';
-        carousel.style.left = '0';
-        carousel.style.width = '100%';
-        carousel.style.height = '100%';
-        carousel.style.zIndex = '0';
-        carousel.style.overflow = 'hidden';
-        carousel.style.pointerEvents = 'none';
-        // Add images
-        images.forEach((src, idx) => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'carousel-bg-img';
-            img.style.position = 'absolute';
-            img.style.top = '0';
-            img.style.left = '0';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
-            img.style.opacity = idx === 0 ? '1' : '0';
-            img.style.transition = 'opacity 0.7s';
-            img.style.pointerEvents = 'none';
-            carousel.appendChild(img);
-        });
-        // Add navigation if enabled
-        const manual = !!this.themeData.carousel.manual_navigation;
-        if (manual && images.length > 1) {
-            const left = document.createElement('button');
-            left.innerHTML = '&#8592;';
-            left.className = 'carousel-nav carousel-nav-left';
-            left.style.position = 'absolute';
-            left.style.top = '50%';
-            left.style.left = '20px';
-            left.style.transform = 'translateY(-50%)';
-            left.style.zIndex = '2';
-            left.style.pointerEvents = 'auto';
-            left.style.background = 'rgba(0,0,0,0.3)';
-            left.style.color = '#fff';
-            left.style.border = 'none';
-            left.style.fontSize = '2rem';
-            left.style.cursor = 'pointer';
-            left.style.borderRadius = '50%';
-            left.style.width = '40px';
-            left.style.height = '40px';
-            left.style.display = 'flex';
-            left.style.alignItems = 'center';
-            left.style.justifyContent = 'center';
-            left.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                this.carouselShowImage(this._carouselIndex - 1);
-            });
-            const right = document.createElement('button');
-            right.innerHTML = '&#8594;';
-            right.className = 'carousel-nav carousel-nav-right';
-            right.style.position = 'absolute';
-            right.style.top = '50%';
-            right.style.right = '20px';
-            right.style.transform = 'translateY(-50%)';
-            right.style.zIndex = '2';
-            right.style.pointerEvents = 'auto';
-            right.style.background = 'rgba(0,0,0,0.3)';
-            right.style.color = '#fff';
-            right.style.border = 'none';
-            right.style.fontSize = '2rem';
-            right.style.cursor = 'pointer';
-            right.style.borderRadius = '50%';
-            right.style.width = '40px';
-            right.style.height = '40px';
-            right.style.display = 'flex';
-            right.style.alignItems = 'center';
-            right.style.justifyContent = 'center';
-            right.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                this.carouselShowImage(this._carouselIndex + 1);
-            });
-            carousel.appendChild(left);
-            carousel.appendChild(right);
+
+        // Set initial state and background
+        if (typeof this._carouselIndex !== 'number' || this._carouselIndex >= images.length) {
+            this._carouselIndex = 0;
         }
-        loginPage.insertBefore(carousel, loginPage.firstChild);
-        // Carousel state
-        this._carouselIndex = 0;
-        this._carouselImages = carousel.querySelectorAll('.carousel-bg-img');
-        // Auto-advance
-        if (this._carouselTimer) clearInterval(this._carouselTimer);
-        const auto = this.themeData.carousel.auto_advance !== false;
-        if (auto && images.length > 1) {
-            this._carouselTimer = setInterval(() => {
-                this.carouselShowImage(this._carouselIndex + 1);
+        root.style.setProperty('--login-bg-carousel-image', `url("${images[this._carouselIndex]}")`);
+
+        // Remove any previous timer
+        if (this._carouselTimer) {
+            clearTimeout(this._carouselTimer);
+            this._carouselTimer = null;
+        }
+
+        
+        this.ensureButton(loginPage, images,'carousel-nav-left', '&#8592;', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            if (this._carouselTimer) {
+                clearTimeout(this._carouselTimer);
+                this._carouselTimer = null;
+            }
+            this.carouselShowImage(this._carouselIndex - 1, images, root, -1);
+        });
+        this.ensureButton(loginPage, images,'carousel-nav-right', '&#8594;', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            if (this._carouselTimer) {
+                clearTimeout(this._carouselTimer);
+                this._carouselTimer = null;
+            }
+            this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
+        });
+
+        // Auto-advance: handled in carouselShowImage after animation
+        if (this.themeData.carousel.auto_advance !== false && images.length > 1 && !this._carouselTimer) {
+            this._carouselTimer = setTimeout(() => {
+                this._carouselTimer = null;
+                this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
             }, 5000);
         }
     }
+    
+
+    carouselShowImage(idx, images, root, direction = 1) {
+        const total = images.length;
+        idx = (idx + total) % total;
+        if (idx === this._carouselIndex || this._carouselSliding) return;
+
+        this._carouselSliding = true;
+        // Fade out
+        root.style.setProperty('--carousel-fade-opacity', '0');
+        setTimeout(() => {
+            root.style.setProperty('--login-bg-carousel-image', `url("${images[idx]}")`);
+            root.style.setProperty('--carousel-fade-opacity', '1');
+            this._carouselIndex = idx;
+            this._carouselSliding = false;
+            // Auto-advance
+            const auto = this.themeData.carousel.auto_advance !== false;
+            if (auto && images.length > 1 && !this._carouselTimer) {
+                this._carouselTimer = setTimeout(() => {
+                    this._carouselTimer = null;
+                    this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
+                }, 5000);
+            }
+        }, 400);
+    }
+    
+    
+    
 
     removeLoginCarousel() {
-        const existing = document.getElementById('login-bg-carousel');
-        if (existing) existing.remove();
-        if (this._carouselTimer) clearInterval(this._carouselTimer);
-        this._carouselImages = null;
+        // Remove navigation buttons if present
+        const left = document.getElementById('carousel-nav-left');
+        const right = document.getElementById('carousel-nav-right');
+        if (left) left.remove();
+        if (right) right.remove();
+        if (this._carouselTimer) {
+            clearTimeout(this._carouselTimer);
+            this._carouselTimer = null;
+        }
+        // Remove the CSS variable
+        document.documentElement.style.removeProperty('--login-bg-carousel-image');
         this._carouselIndex = 0;
-    }
-
-    carouselShowImage(idx) {
-        if (!this._carouselImages) return;
-        const total = this._carouselImages.length;
-        idx = (idx + total) % total;
-        this._carouselImages.forEach((img, i) => {
-            img.style.opacity = i === idx ? '1' : '0';
-        });
-        this._carouselIndex = idx;
     }
 }
 
