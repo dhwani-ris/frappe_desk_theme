@@ -11,6 +11,13 @@ class DeskTheme(Document):
 		if self.hide_app_switcher and not self.default_app:
 			frappe.throw("Default App is required when App Switcher is hidden")
 
+		# Carousel validation: if carousel selected, must have at least one image
+		if self.page_background_type == "Carousel":
+			if not self.carousel_images or not any(img.image for img in self.carousel_images):
+				# Fallback: clear page_background_type
+				self.page_background_type = ""
+				frappe.msgprint("No carousel images found. Falling back to default background.")
+
 	def on_update(self):
 		# Update system settings with the selected default app
 		if self.hide_app_switcher and self.default_app:
@@ -37,6 +44,17 @@ class DeskTheme(Document):
 			
 		except Exception as e:
 			frappe.log_error(f"Error updating website settings: {str(e)}")
+
+	def get_carousel_data(self):
+		"""Return carousel images and config for API"""
+		if self.page_background_type != "Carousel":
+			return None
+		images = [img.image for img in self.carousel_images if img.image]
+		return {
+			"images": images,
+			"manual_navigation": getattr(self, "allow_manual_navigation", True),
+			"auto_advance": getattr(self, "carousel_auto_advance", True),
+		}
 
 
 @frappe.whitelist()
