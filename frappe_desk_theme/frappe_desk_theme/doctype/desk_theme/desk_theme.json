@@ -80,9 +80,11 @@
   "footer_tab",
   "footer_section",
   "copyright_text",
+  "footer_background_color",
   "sticky_footer",
   "column_break_footer",
-  "footer_powered_by"
+  "footer_powered_by",
+  "footer_text_color"
  ],
  "fields": [
   {
@@ -474,7 +476,7 @@
   {
    "description": "Custom powered by text for footer",
    "fieldname": "footer_powered_by",
-   "fieldtype": "Small Text",
+   "fieldtype": "Data",
    "label": "Footer \"Powered By\""
   },
   {
@@ -491,6 +493,16 @@
    "fieldname": "allow_manual_navigation",
    "fieldtype": "Check",
    "label": "Allow Manual Navigation"
+  },
+  {
+   "fieldname": "footer_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "footer_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
   }
  ],
  "grid_page_length": 50,
@@ -498,7 +510,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-07-21 18:13:14.615451",
+ "modified": "2025-08-03 13:37:21.116029",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",

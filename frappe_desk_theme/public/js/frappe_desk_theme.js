@@ -534,6 +534,15 @@ class FrappeDeskTheme {
             root.style.setProperty('--widget-color', theme.number_card_text_color);
         }
 
+        // Footer styling
+        if (theme.footer_background_color) {
+            root.style.setProperty('--footer-bg', theme.footer_background_color);
+        }
+        if (theme.footer_text_color) {
+            root.style.setProperty('--footer-color', theme.footer_text_color);
+            root.style.setProperty('--footer-powered-color', theme.footer_text_color);
+        }
+
         // Sidebar visibility control
         if (theme.hide_side_bar !== undefined) {
             root.style.setProperty('--sidebar-expanded', theme.hide_side_bar === 0 ? 'expanded' : '');
