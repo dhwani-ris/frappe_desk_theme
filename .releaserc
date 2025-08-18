@@ -1,0 +1,21 @@
+{
+	"branches": ["main", "master"],
+	"plugins": [
+		["@semantic-release/commit-analyzer", {
+			"preset": "angular"
+		}],
+		"@semantic-release/release-notes-generator",
+		[
+			"@semantic-release/exec", {
+				"prepareCmd": "python $GITHUB_WORKSPACE/.github/helper/update-version.py ${nextRelease.version}"
+			}
+		],
+		[
+			"@semantic-release/git", {
+				"assets": ["*/__init__.py"],
+				"message": "chore(release): Bumped to Version ${nextRelease.version}"
+			}
+		],
+		"@semantic-release/github"
+	]
+}
