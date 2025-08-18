@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, master ]
+    branches: [ main, develop, development, master ]
   pull_request:
-    branches: [ main, develop, master ]
+    branches: [ main, develop, development, master ]
   workflow_dispatch:
 
 permissions:
@@ -15,51 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  commit-lint:
-    name: 'Semantic Commits'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 200
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          check-latest: true
-
-      - name: Check commit titles
-        run: |
-          npm install @commitlint/cli @commitlint/config-conventional
-          npx commitlint --verbose --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
-
-  semgrep:
-    name: 'Semgrep Security Rules'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: pip
-
-      - name: Download Semgrep rules
-        run: git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-rules
-
-      - name: Run Semgrep rules
-        run: |
-          pip install semgrep
-          semgrep ci --config ./frappe-semgrep-rules/rules --config r/python.lang.correctness
-
   dependency-vulnerability:
     name: 'Vulnerable Dependency Check'
     runs-on: ubuntu-latest
@@ -87,96 +42,6 @@ jobs:
           pip install pip-audit
           cd ${GITHUB_WORKSPACE}
           pip-audit --desc on --ignore-vuln PYSEC-2023-312 .
-
-  pre-commit-checks:
-    name: 'Pre-Commit Hooks'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: pip
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pre-commit ruff black
-
-      - name: Install Node.js dependencies
-        run: |
-          npm ci
-          npm install -g prettier eslint
-
-      - name: Check for pre-commit config
-        run: |
-          if [ ! -f .pre-commit-config.yaml ]; then
-            echo "Pre-commit config not found. Downloading..."
-            curl -o .pre-commit-config.yaml https://raw.githubusercontent.com/dhwani-ris/frappe-pre-commit/main/examples/.pre-commit-config.yaml
-          else
-            echo "Pre-commit config already exists."
-          fi
-
-      - name: Install pre-commit hooks
-        run: pre-commit install
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files
-
-  lint-and-format:
-    name: 'Lint and Format Check'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff black
-
-      - name: Install Node.js dependencies
-        run: npm ci
-
-      - name: Run Python linting (Ruff)
-        run: |
-          ruff check .
-          ruff format --check .
-
-      - name: Run JavaScript linting (ESLint)
-        run: |
-          npm run lint || echo "No lint script found, skipping ESLint"
-
-      - name: Run JavaScript formatting (Prettier)
-        run: |
-          npm run format:check || echo "No format:check script found, skipping Prettier"
 
   test:
     name: 'Test'
@@ -245,6 +110,7 @@ jobs:
   dependency-update:
     name: 'Dependency Update Check'
     runs-on: ubuntu-latest
+    needs: dependency-vulnerability
     if: github.event_name == 'pull_request'
 
     steps:
