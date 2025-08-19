@@ -29,7 +29,26 @@
     background-image: var(--login-bg-image, none) !important;
     background-size: cover;
     height: 100vh;
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 100vh;
+    margin: 0;
 }
+
+#page-login::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--login-bg-carousel-image, var(--login-bg-image, none));
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    opacity: var(--carousel-fade-opacity, 1);
+    transition: opacity 0.7s;
+}
+
 
 /* Login form buttons - primary action buttons with hover states */
 .btn-primary.btn-login,
@@ -58,13 +77,17 @@ label.control-label {
 }
 
 /* Login form container - supports absolute positioning (Left/Right/Center) */
-.for-login {
+.for-login,.for-signup,.for-forgot, .for-login-with-email-link {
     position: var(--login-box-position, static);
     right: var(--login-box-right, auto);
     left: var(--login-box-left, auto);
     top: var(--login-box-top, 18%);
     background-color: var(--login-box-bg-override, transparent) !important;
     border-radius: var(--login-box-border-radius, 0) !important;
+}
+
+/* Login animation - only for login forms */
+.for-login {
     opacity: 0;
     transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
     transform: translateY(20px);
@@ -88,7 +111,7 @@ label.control-label {
 }
 
 /* Login form card - inner container with padding and width controls */
-.login-content.page-card {
+.login-content.page-card, .signup-content.page-card {
     background-color: var(--login-box-bg,#fff) !important;
     border: 2px solid var(--login-box-bg,#fff) !important;
     width: var(--login-box-width,400px);
@@ -96,8 +119,19 @@ label.control-label {
 }
 
 /* Login content border - customizable border for form container */
-.login-content {
+/* .login-content, .forgot-content, .signup-content {
     border: var(--login-content-border,none);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+} */
+
+/* Signup message - when app details are inside the box, make it part of the container */
+.sign-up-message {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-top: 20px;
+    padding: 0 !important;
+    color: inherit;
 }
 
 /* Default login page title - can be hidden when custom title is used */
@@ -326,9 +360,11 @@ div.level-right {
    ======================================== */
 
 /* Number widgets - dashboard widgets and statistical cards */
-.widget.number-widget-box {
+.widget.number-widget-box,
+.widget.dashboard-widget-box {
     background-color: var(--widget-bg);
     border: 2px solid var(--widget-border);
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
 }
 
 /* Widget content - all text elements within widgets */
@@ -355,5 +391,177 @@ div.level-right {
     .login-content.page-card {
         width: auto;
     }
+}
+
+/* ========================================
+   FOOTER STYLING
+   ======================================== */
+
+/* Ensure main-section takes full height for proper footer positioning */
+.main-section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content area should flex to push footer down */
+.main-section > .container,
+.main-section > .page-container {
+    flex: 1;
+}
+
+/* Main footer container - positioned to align with main content area */
+.desk-footer {
+    background-color: var(--footer-bg, #f8f9fa);
+    color: var(--footer-color, #495057);
+    padding: 15px 20px;
+    border-top: 1px solid var(--footer-border, #dee2e6);
+    font-size: 14px;
+    display: var(--footer-display, flex);
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: auto;
+    /* Position footer to align with main content area, not spanning full width */
+    margin-left: 50px; /* Default collapsed sidebar width */
+    transition: margin-left 200ms ease;
+    /* Ensure footer has consistent height */
+    min-height: 50px;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+/* Adjust footer margin when sidebar is expanded */
+.body-sidebar-container.expanded ~ * .desk-footer,
+.body-sidebar-container.expanded + .main-section .desk-footer {
+    margin-left: var(--left-sidebar-width, 220px);
+}
+
+/* Alternative approach: Position footer within main-section if it exists */
+.main-section .desk-footer {
+    margin-left: 0 !important;
+}
+
+/* Sticky footer positioning - aligns with content area */
+.desk-footer.sticky {
+    position: fixed;
+    bottom: 0;
+    left: 50px; /* Default collapsed sidebar width */
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    margin-left: 0;
+    transition: left 200ms ease-in-out;
+    /* Ensure consistent height for sticky footer */
+    height: 50px;
+    box-sizing: border-box;
+}
+
+/* JavaScript will handle dynamic positioning, but keep CSS fallback */
+.body-sidebar-container.expanded ~ * .desk-footer.sticky,
+body[data-sidebar="1"] .desk-footer.sticky {
+    left: 220px; /* Use fixed value instead of CSS variable for better performance */
+}
+
+/* When footer is sticky, add padding to main section to prevent content overlap */
+.main-section.has-sticky-footer,
+body.has-sticky-footer .main-section {
+    padding-bottom: 60px; /* 50px footer height + 10px buffer */
+}
+
+/* Fallback: If main-section doesn't exist, add padding to body */
+body.has-sticky-footer:not(:has(.main-section)) {
+    padding-bottom: 60px;
+}
+
+/* Ensure content doesn't overlap with sticky footer */
+.main-section.has-sticky-footer {
+    min-height: calc(100vh - 60px); /* Full height minus footer and buffer */
+}
+
+/* Footer left section - copyright text */
+.desk-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Footer right section - powered by text */
+.desk-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--footer-powered-color, #6c757d);
+    font-size: 13px;
+}
+
+/* Footer links styling */
+.desk-footer a {
+    color: var(--footer-link-color, #007bff);
+    text-decoration: none;
+}
+
+.desk-footer a:hover {
+    color: var(--footer-link-hover-color, #0056b3);
+    text-decoration: underline;
+}
+
+/* Responsive footer for mobile and tablets */
+@media (max-width: 992px) {
+    /* On mobile/tablet, footer should span full width as sidebar becomes overlay */
+    .desk-footer {
+        margin-left: 0 !important;
+    }
+    
+    .desk-footer.sticky {
+        left: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .desk-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 12px 15px;
+        gap: 8px;
+    }
+    
+    .desk-footer-left,
+    .desk-footer-right {
+        justify-content: center;
+    }
+    
+    .main-section.has-sticky-footer,
+    body.has-sticky-footer .main-section,
+    body.has-sticky-footer:not(:has(.main-section)) {
+        padding-bottom: 70px; /* Reduced padding for mobile */
+    }
+}
+
+.carousel-nav {
+    background: var(--carousel-nav-bg, rgba(0,0,0,0.3));
+    color: var(--carousel-nav-color, #fff);
+    border: none;
+    font-size: var(--carousel-nav-size, 2rem);
+    cursor: pointer;
+    border-radius: var(--carousel-nav-radius, 50%);
+    width: var(--carousel-nav-size, 2rem);
+    height: var(--carousel-nav-size, 2rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: var(--carousel-nav-z, 2);
+    pointer-events: auto;
+}
+
+.carousel-nav-left {
+    left: 20px;
+}
+
+.carousel-nav-right {
+    right: 20px;
 }
 

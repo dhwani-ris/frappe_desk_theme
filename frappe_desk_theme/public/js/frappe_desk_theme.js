@@ -9,7 +9,13 @@ class FrappeDeskTheme {
         this.themeData = null;
         // Cache configuration
         this.cacheKey = 'frappe_desk_theme_cache';
-        this.cacheTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        this.footerCacheStorageKey = 'frappe_desk_theme_footer_cache';
+        this.cacheTimeout = 30 * 24 * 60 * 60 * 1000; // 30 days (1 month) in milliseconds
+        // Footer creation throttling and caching
+        this.footerCreating = false;
+        this.footerHtmlCache = null;
+        this.footerCacheKey = null; // Track what theme data the footer was cached for
+        this.stickyFooterListenerSetup = false;
         this.init();
     }
 
@@ -33,7 +39,7 @@ class FrappeDeskTheme {
             
             this.setupEventListeners();
         } catch (error) {
-            // Silent fail in production - apply default theme and show login box
+            // Production-ready silent fail - apply default theme and show login box
             this.applyTheme();
             this.showLoginBoxFallback();
         }
@@ -107,7 +113,7 @@ class FrappeDeskTheme {
         const now = Date.now();
         const cacheAge = now - cachedData.timestamp;
         
-        return cacheAge < this.cacheTimeout;
+        return cacheAge < this.cacheTimeout; // 30 days
     }
 
     /**
@@ -168,6 +174,10 @@ class FrappeDeskTheme {
      */
     async refreshTheme() {
         try {
+            // Clear footer cache to ensure fresh data
+            this.footerHtmlCache = null;
+            this.footerCacheKey = null;
+            
             await this.loadTheme();
             this.applyTheme();
             
@@ -176,7 +186,48 @@ class FrappeDeskTheme {
                 detail: { themeData: this.themeData }
             }));
         } catch (error) {
-            console.error('Failed to refresh theme:', error);
+            // Silent fail - theme refresh errors should not interrupt user experience
+        }
+    }
+
+    /**
+     * Save footer cache to localStorage
+     */
+    saveFooterCache(footerHtml, cacheKey) {
+        try {
+            const cacheData = {
+                html: footerHtml,
+                key: cacheKey,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(this.footerCacheStorageKey, JSON.stringify(cacheData));
+        } catch (error) {
+            // localStorage might be full or disabled
+        }
+    }
+
+    /**
+     * Load footer cache from localStorage
+     */
+    loadFooterCache() {
+        try {
+            const cached = localStorage.getItem(this.footerCacheStorageKey);
+            if (!cached) return null;
+
+            const cacheData = JSON.parse(cached);
+            const now = Date.now();
+            const cacheAge = now - cacheData.timestamp;
+
+            // Return cached data if it's still valid (within 30-day timeout)
+            if (cacheAge < this.cacheTimeout) {
+                return cacheData;
+            } else {
+                // Remove expired cache
+                localStorage.removeItem(this.footerCacheStorageKey);
+                return null;
+            }
+        } catch (error) {
+            return null;
         }
     }
 
@@ -186,6 +237,10 @@ class FrappeDeskTheme {
     clearCache() {
         try {
             localStorage.removeItem(this.cacheKey);
+            localStorage.removeItem(this.footerCacheStorageKey);
+            // Also clear footer cache
+            this.footerHtmlCache = null;
+            this.footerCacheKey = null;
         } catch (error) {
             // Ignore localStorage errors
         }
@@ -235,7 +290,9 @@ class FrappeDeskTheme {
             '--login-title-after-justify', '--login-title-after-margin', '--login-title-after-content', '--login-title-after-color',
             '--login-box-top', '--login-box-bg-override', '--login-box-border-radius', '--search-bar-display',
             '--navbar-toggler-border', '--breadcrumb-disabled-color', '--help-nav-link-color', '--help-nav-link-stroke',
-            '--hide-app-switcher', '--app-switcher-pointer-events'
+            '--hide-app-switcher', '--app-switcher-pointer-events', '--footer-bg', '--footer-color', '--footer-border',
+            '--footer-display', '--footer-powered-color', '--footer-link-color', '--footer-link-hover-color',
+            '--carousel-fade-opacity', '--login-bg-carousel-image'
         ];
 
         // Remove each CSS variable from document root
@@ -276,6 +333,18 @@ class FrappeDeskTheme {
         root.style.setProperty('--breadcrumb-disabled-color', '#6c757d');
         root.style.setProperty('--help-nav-link-color', 'inherit');
         root.style.setProperty('--help-nav-link-stroke', 'currentColor');
+        
+        // Footer defaults
+        root.style.setProperty('--footer-display', 'flex');
+        root.style.setProperty('--footer-bg', '#f8f9fa');
+        root.style.setProperty('--footer-color', '#495057');
+        root.style.setProperty('--footer-border', '#dee2e6');
+        root.style.setProperty('--footer-powered-color', '#6c757d');
+        root.style.setProperty('--footer-link-color', '#007bff');
+        root.style.setProperty('--footer-link-hover-color', '#0056b3');
+
+        // Carousel fade default
+        root.style.setProperty('--carousel-fade-opacity', '1');
     }
 
     /**
@@ -294,11 +363,15 @@ class FrappeDeskTheme {
         this.setDefaultCSSVariables();
 
         // Login page background customization
-        if (theme.login_page_background_color) {
-            root.style.setProperty('--login-bg-color', theme.login_page_background_color);
-        }
-        if (theme.login_page_background_image) {
-            root.style.setProperty('--login-bg-image', `url("${theme.login_page_background_image}")`);
+        if (theme.carousel && theme.carousel.images && theme.carousel.images.length > 0) {
+            // Skip static background image/color for carousel mode
+        } else {
+            if (theme.login_page_background_color) {
+                root.style.setProperty('--login-bg-color', theme.login_page_background_color);
+            }
+            if (theme.login_page_background_image) {
+                root.style.setProperty('--login-bg-image', `url("${theme.login_page_background_image}")`);
+            }
         }
         
         // Login box positioning - supports Left, Right, or Default positioning
@@ -461,6 +534,15 @@ class FrappeDeskTheme {
             root.style.setProperty('--widget-color', theme.number_card_text_color);
         }
 
+        // Footer styling
+        if (theme.footer_background_color) {
+            root.style.setProperty('--footer-bg', theme.footer_background_color);
+        }
+        if (theme.footer_text_color) {
+            root.style.setProperty('--footer-color', theme.footer_text_color);
+            root.style.setProperty('--footer-powered-color', theme.footer_text_color);
+        }
+
         // Sidebar visibility control
         if (theme.hide_side_bar !== undefined) {
             root.style.setProperty('--sidebar-expanded', theme.hide_side_bar === 0 ? 'expanded' : '');
@@ -476,7 +558,13 @@ class FrappeDeskTheme {
         this.toggleSidebar();
         this.toggleSearchBar();
         this.setDefaultApp();
+        if (this.themeData.carousel && this.themeData.carousel.images && this.themeData.carousel.images.length > 0) {
+            this.renderLoginCarousel();
+        } else {
+            this.removeLoginCarousel();
+        }
         this.showLoginBox();
+        this.createFooter();
     }
 
     /**
@@ -540,11 +628,181 @@ class FrappeDeskTheme {
             try {
                 // Set the current app to the default app (same as breadcrumbs.js line 83)
                 frappe.app.sidebar.apps_switcher.set_current_app(this.themeData.default_app);
-            } catch (error) {
-                // Silent fail if app switcher is not available or app doesn't exist
-                console.warn('Failed to set default app:', error);
+                    } catch (error) {
+            // Silent fail if app switcher is not available or app doesn't exist
+        }
+        }
+    }
+
+    /**
+     * Create and display footer in desk view using HTML template
+     * Much more efficient than creating DOM elements dynamically
+     */
+    async createFooter() {
+        // Don't create footer on login page
+        if (document.body.classList.contains('login-page') || document.querySelector('#page-login')) {
+            return;
+        }
+
+        // Remove existing footer if any
+        const existingFooter = document.querySelector('#desk-footer');
+        if (existingFooter) {
+            existingFooter.remove();
+            // Clean up sticky footer classes
+            document.body.classList.remove('has-sticky-footer');
+            const mainSection = document.querySelector('.main-section');
+            if (mainSection) {
+                mainSection.classList.remove('has-sticky-footer');
             }
         }
+
+        // Check if footer should be displayed (basic check to avoid unnecessary API calls)
+        if (!this.themeData.copyright_text && !this.themeData.footer_powered_by) {
+            return;
+        }
+
+        // Throttle footer creation to prevent multiple simultaneous calls
+        if (this.footerCreating) {
+            return;
+        }
+        this.footerCreating = true;
+
+        try {
+            // Create a cache key from footer-related theme data
+            const currentFooterKey = JSON.stringify({
+                copyright_text: this.themeData.copyright_text,
+                footer_powered_by: this.themeData.footer_powered_by,
+                sticky_footer: this.themeData.sticky_footer
+            });
+
+            let footerHtml = this.footerHtmlCache;
+            
+            // Check in-memory cache first, then localStorage, then API
+            if (!footerHtml || this.footerCacheKey !== currentFooterKey) {
+                // Try to load from localStorage
+                const cachedFooter = this.loadFooterCache();
+                if (cachedFooter && cachedFooter.key === currentFooterKey) {
+                    footerHtml = cachedFooter.html;
+                    this.footerHtmlCache = footerHtml;
+                    this.footerCacheKey = currentFooterKey;
+                } else {
+                    
+                    // Get rendered footer HTML from server
+                    const response = await fetch('/api/method/frappe_desk_theme.api.get_footer_html', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    footerHtml = data?.message || '';
+                    
+                    // Cache the HTML and key for subsequent calls (both memory and localStorage)
+                    this.footerHtmlCache = footerHtml;
+                    this.footerCacheKey = currentFooterKey;
+                    this.saveFooterCache(footerHtml, currentFooterKey);
+                }
+            }
+
+            if (footerHtml.trim()) {
+                // Create a temporary container to hold the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = footerHtml;
+                
+                // Get the footer element from the template
+                const footerElement = tempDiv.querySelector('#desk-footer');
+                if (footerElement) {
+                    // Try to append to main-section first, then fall back to body
+                    const mainSection = document.querySelector('.main-section');
+                    if (mainSection) {
+                        mainSection.appendChild(footerElement);
+                        if (this.themeData.sticky_footer) {
+                            mainSection.classList.add('has-sticky-footer');
+                            // Set up sticky footer sidebar toggle listener
+                            this.setupStickyFooterToggle();
+                        }
+                    } else {
+                        // Fallback to body if main-section doesn't exist
+                        document.body.appendChild(footerElement);
+                        if (this.themeData.sticky_footer) {
+                            document.body.classList.add('has-sticky-footer');
+                            // Set up sticky footer sidebar toggle listener
+                            this.setupStickyFooterToggle();
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            // Silent fail - footer is optional, don't show errors to user
+        } finally {
+            this.footerCreating = false;
+        }
+    }
+
+    /**
+     * Set up dynamic positioning for sticky footer when sidebar toggles
+     * Ensures footer position updates in real-time with sidebar state
+     */
+    setupStickyFooterToggle() {
+        // Avoid setting up multiple listeners
+        if (this.stickyFooterListenerSetup) {
+            return;
+        }
+        this.stickyFooterListenerSetup = true;
+
+        // Function to update sticky footer position
+        const updateStickyFooterPosition = () => {
+            const footer = document.querySelector('#desk-footer.sticky');
+            if (!footer) return;
+
+            const sidebarContainer = document.querySelector('.body-sidebar-container');
+            const isExpanded = sidebarContainer && sidebarContainer.classList.contains('expanded');
+            
+            // Update footer position based on sidebar state
+            if (isExpanded) {
+                footer.style.left = '220px';
+            } else {
+                footer.style.left = '50px';
+            }
+        };
+
+        // Listen for sidebar toggle events
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && 
+                    mutation.attributeName === 'class' && 
+                    mutation.target.classList.contains('body-sidebar-container')) {
+                    // Delay to ensure CSS transitions complete
+                    setTimeout(updateStickyFooterPosition, 50);
+                }
+            });
+        });
+
+        // Observe sidebar container for class changes
+        const sidebarContainer = document.querySelector('.body-sidebar-container');
+        if (sidebarContainer) {
+            observer.observe(sidebarContainer, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+
+        // Also listen for sidebar toggle via click events
+        document.addEventListener('click', (event) => {
+            // Check if clicked element or its parent is a sidebar toggle
+            const isToggle = event.target.closest('.collapse-sidebar-link, .sidebar-toggle, [data-toggle="sidebar"]');
+            if (isToggle) {
+                setTimeout(updateStickyFooterPosition, 200); // Allow time for animation
+            }
+        });
+
+        // Initial position update
+        updateStickyFooterPosition();
     }
 
     /**
@@ -559,8 +817,18 @@ class FrappeDeskTheme {
 
         // Listen for DOM changes to apply theme to dynamically added elements
         // Frappe uses dynamic content loading, so we need to monitor for new elements
+        let footerTimeout;
         const observer = new MutationObserver(() => {
             this.toggleSearchBar();
+            
+            // Debounce footer creation to avoid performance issues
+            clearTimeout(footerTimeout);
+            footerTimeout = setTimeout(() => {
+                // Only create footer if it doesn't exist
+                if (!document.querySelector('#desk-footer')) {
+                    this.createFooter();
+                }
+            }, 500); // 500ms delay to avoid constant recreation
         });
 
         // Observe all changes in document body and its children
@@ -571,6 +839,114 @@ class FrappeDeskTheme {
 
     }
 
+    // Navigation buttons
+    
+    ensureButton(loginPage, images, id, html, onClick) {
+        const manual = !!this.themeData.carousel.manual_navigation;
+        let btn = document.getElementById(id);
+        if (!manual || images.length <= 1) {
+            if (btn) btn.remove();
+            return null;
+        }
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = id;
+            btn.className = `carousel-nav ${id === 'carousel-nav-left' ? 'carousel-nav-left' : 'carousel-nav-right'}`;
+            btn.innerHTML = html;
+            btn.addEventListener('click', onClick);
+            loginPage.appendChild(btn);
+        }
+        return btn;
+    };
+
+    renderLoginCarousel() {
+        const loginPage = document.querySelector('#page-login');
+        if (!loginPage) return;
+        const root = document.documentElement;
+        const images = this.themeData.carousel.images;
+        if (!images || images.length === 0) return;
+
+        // Set initial state and background
+        if (typeof this._carouselIndex !== 'number' || this._carouselIndex >= images.length) {
+            this._carouselIndex = 0;
+        }
+        root.style.setProperty('--login-bg-carousel-image', `url("${images[this._carouselIndex]}")`);
+
+        // Remove any previous timer
+        if (this._carouselTimer) {
+            clearTimeout(this._carouselTimer);
+            this._carouselTimer = null;
+        }
+
+        
+        this.ensureButton(loginPage, images,'carousel-nav-left', '&#8592;', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            if (this._carouselTimer) {
+                clearTimeout(this._carouselTimer);
+                this._carouselTimer = null;
+            }
+            this.carouselShowImage(this._carouselIndex - 1, images, root, -1);
+        });
+        this.ensureButton(loginPage, images,'carousel-nav-right', '&#8594;', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            if (this._carouselTimer) {
+                clearTimeout(this._carouselTimer);
+                this._carouselTimer = null;
+            }
+            this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
+        });
+
+        // Auto-advance: handled in carouselShowImage after animation
+        if (this.themeData.carousel.auto_advance !== false && images.length > 1 && !this._carouselTimer) {
+            this._carouselTimer = setTimeout(() => {
+                this._carouselTimer = null;
+                this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
+            }, 5000);
+        }
+    }
+    
+
+    carouselShowImage(idx, images, root, direction = 1) {
+        const total = images.length;
+        idx = (idx + total) % total;
+        if (idx === this._carouselIndex || this._carouselSliding) return;
+
+        this._carouselSliding = true;
+        // Fade out
+        root.style.setProperty('--carousel-fade-opacity', '0');
+        setTimeout(() => {
+            root.style.setProperty('--login-bg-carousel-image', `url("${images[idx]}")`);
+            root.style.setProperty('--carousel-fade-opacity', '1');
+            this._carouselIndex = idx;
+            this._carouselSliding = false;
+            // Auto-advance
+            const auto = this.themeData.carousel.auto_advance !== false;
+            if (auto && images.length > 1 && !this._carouselTimer) {
+                this._carouselTimer = setTimeout(() => {
+                    this._carouselTimer = null;
+                    this.carouselShowImage(this._carouselIndex + 1, images, root, 1);
+                }, 5000);
+            }
+        }, 400);
+    }
+    
+    
+    
+
+    removeLoginCarousel() {
+        // Remove navigation buttons if present
+        const left = document.getElementById('carousel-nav-left');
+        const right = document.getElementById('carousel-nav-right');
+        if (left) left.remove();
+        if (right) right.remove();
+        if (this._carouselTimer) {
+            clearTimeout(this._carouselTimer);
+            this._carouselTimer = null;
+        }
+        // Remove the CSS variable
+        document.documentElement.style.removeProperty('--login-bg-carousel-image');
+        this._carouselIndex = 0;
+    }
 }
 
 // Initialize theme system when DOM is ready

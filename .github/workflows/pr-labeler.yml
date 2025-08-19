@@ -1,0 +1,130 @@
+# .github/workflows/pr-labeler.yml
+name: "PR Labeler"
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches: [main, master, develop, development, uat] # Label PRs to these branches
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    # Only run for PRs targeting main, master, develop, development, or uat branches
+    if: contains(fromJson('["main", "master", "develop", "development", "uat"]'), github.event.pull_request.base.ref)
+    steps:
+      - name: Auto Label PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            const title = pr.title.toLowerCase();
+            const targetBranch = pr.base.ref;
+            const labels = [];
+
+            console.log(`Labeling PR #${pr.number} targeting ${targetBranch} branch`);
+
+            // Skip release note for maintenance tasks
+            const skipPrefixes = ['chore', 'ci', 'style', 'test', 'refactor'];
+            const hasSkipPrefix = skipPrefixes.some(prefix => 
+              title.startsWith(prefix + ':') || title.startsWith(prefix + '(')
+            );
+            
+            if (hasSkipPrefix) {
+              labels.push('skip-release-notes');
+            }
+
+            // Type detection from title
+            if (title.includes('feat') || title.includes('feature')) {
+              labels.push('feature');
+            } else if (title.includes('fix') || title.includes('bug')) {
+              labels.push('bug');
+            } else if (title.includes('docs') || title.includes('doc')) {
+              labels.push('docs');
+            } else if (title.includes('refactor')) {
+              labels.push('refactor');
+            }
+
+            // Add branch-specific labels
+            if (targetBranch === 'main' || targetBranch === 'master') {
+              labels.push('release');
+              console.log('🚀 Production release PR');
+            } else if (targetBranch === 'uat') {
+              labels.push('uat-release');
+              console.log('🧪 UAT release PR');
+            } else if (targetBranch === 'develop' || targetBranch === 'development') {
+              labels.push('development');
+              console.log('🛠️ Development PR');
+            }
+
+            // Add labels with error handling
+            if (labels.length > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: labels
+                });
+                
+                console.log(`✅ Added labels: ${labels.join(', ')}`);
+              } catch (error) {
+                if (error.status === 422) {
+                  // Handle missing labels by creating them first
+                  console.log('Some labels don\'t exist, creating them...');
+                  
+                  const labelConfigs = {
+                    'skip-release-notes': { color: '6c757d', description: 'Skip in release notes' },
+                    'uat-release': { color: 'fd7e14', description: 'UAT release PR' },
+                    'released': { color: 'e83e8c', description: 'Production release PR' },
+                    'development': { color: '17a2b8', description: 'Development branch PR' },
+                    'feature': { color: '0e8a16', description: 'New feature' },
+                    'bug': { color: 'd73a4a', description: 'Bug fix' },
+                    'docs': { color: '0052cc', description: 'Documentation' },
+                    'refactor': { color: 'fbca04', description: 'Code refactoring' }
+                  };
+                  
+                  // Create missing labels
+                  for (const label of labels) {
+                    if (labelConfigs[label]) {
+                      try {
+                        await github.rest.issues.createLabel({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          name: label,
+                          color: labelConfigs[label].color,
+                          description: labelConfigs[label].description
+                        });
+                        console.log(`🆕 Created label: ${label}`);
+                      } catch (createError) {
+                        console.log(`⚠️ Could not create label ${label}: ${createError.message}`);
+                      }
+                    }
+                  }
+                  
+                  // Try adding labels again
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: context.payload.pull_request.number,
+                      labels: labels
+                    });
+                    console.log(`✅ Added labels after creation: ${labels.join(', ')}`);
+                  } catch (retryError) {
+                    console.log(`⚠️ Still couldn't add labels: ${retryError.message}`);
+                  }
+                } else {
+                  console.log(`⚠️ Error adding labels: ${error.message}`);
+                }
+              }
+            }

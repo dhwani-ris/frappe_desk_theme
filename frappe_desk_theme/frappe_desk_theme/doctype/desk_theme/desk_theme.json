@@ -10,6 +10,8 @@
   "login_button_background_color",
   "login_page_button_hover_background_color",
   "page_background_type",
+  "allow_manual_navigation",
+  "carousel_images",
   "login_page_background_color",
   "login_page_background_image",
   "is_app_details_inside_the_box",
@@ -74,7 +76,15 @@
   "input_border_color",
   "column_break_pdaj",
   "input_text_color",
-  "input_label_color"
+  "input_label_color",
+  "footer_tab",
+  "footer_section",
+  "copyright_text",
+  "footer_background_color",
+  "sticky_footer",
+  "column_break_footer",
+  "footer_powered_by",
+  "footer_text_color"
  ],
  "fields": [
   {
@@ -146,7 +156,7 @@
    "fieldname": "page_background_type",
    "fieldtype": "Select",
    "label": "Page Background Type",
-   "options": "\nColor\nImage"
+   "options": "\nColor\nImage\nCarousel"
   },
   {
    "depends_on": "eval:doc.page_background_type == \"Color\"",
@@ -430,11 +440,69 @@
   },
   {
    "depends_on": "eval:doc.hide_app_switcher == 1",
-   "description": "Select default app when app switcher is hidden. Required when app switcher is hidden.",
+   "description": "Select default app when app switcher is hidden.",
    "fieldname": "default_app",
    "fieldtype": "Select",
    "label": "Default App",
    "mandatory_depends_on": "eval:doc.hide_app_switcher == 1"
+  },
+  {
+   "fieldname": "footer_tab",
+   "fieldtype": "Tab Break",
+   "label": "Footer"
+  },
+  {
+   "fieldname": "footer_section",
+   "fieldtype": "Section Break",
+   "label": "Footer Settings"
+  },
+  {
+   "description": "Copyright text to display in footer",
+   "fieldname": "copyright_text",
+   "fieldtype": "Data",
+   "label": "Copyright Text"
+  },
+  {
+   "default": "0",
+   "description": "Makes footer stick to bottom of screen",
+   "fieldname": "sticky_footer",
+   "fieldtype": "Check",
+   "label": "Sticky Footer"
+  },
+  {
+   "fieldname": "column_break_footer",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Custom powered by text for footer",
+   "fieldname": "footer_powered_by",
+   "fieldtype": "Data",
+   "label": "Footer \"Powered By\""
+  },
+  {
+   "depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "fieldname": "carousel_images",
+   "fieldtype": "Table",
+   "label": "Carousel Images",
+   "mandatory_depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "options": "Desk Theme Carousel Images"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.page_background_type==\"Carousel\"",
+   "fieldname": "allow_manual_navigation",
+   "fieldtype": "Check",
+   "label": "Allow Manual Navigation"
+  },
+  {
+   "fieldname": "footer_background_color",
+   "fieldtype": "Color",
+   "label": "Background Color"
+  },
+  {
+   "fieldname": "footer_text_color",
+   "fieldtype": "Color",
+   "label": "Text Color"
   }
  ],
  "grid_page_length": 50,
@@ -442,7 +510,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-26 12:58:37.343023",
+ "modified": "2025-08-03 13:37:21.116029",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",
