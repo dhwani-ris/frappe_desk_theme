@@ -297,10 +297,108 @@ body {
     color: var(--sidebar-text-color,#525252) !important;
 }
 
+/* Sidebar item hover state - background and text color on hover */
+.standard-sidebar-item:hover {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Sidebar item hover state - child elements inherit hover colors */
+.standard-sidebar-item:hover .item-anchor,
+.standard-sidebar-item:hover .sidebar-item-label,
+.standard-sidebar-item:hover .sidebar-item-icon,
+.standard-sidebar-item:hover .sidebar-item-icon svg {
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Sidebar item active state - same as hover for active items */
+.standard-sidebar-item.active-sidebar,
+.standard-sidebar-item.active-sidebar:hover {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Sidebar item active state - child elements inherit active colors */
+.standard-sidebar-item.active-sidebar .item-anchor,
+.standard-sidebar-item.active-sidebar .sidebar-item-label,
+.standard-sidebar-item.active-sidebar .sidebar-item-icon,
+.standard-sidebar-item.active-sidebar .sidebar-item-icon svg,
+.standard-sidebar-item.active-sidebar:hover .item-anchor,
+.standard-sidebar-item.active-sidebar:hover .sidebar-item-label,
+.standard-sidebar-item.active-sidebar:hover .sidebar-item-icon,
+.standard-sidebar-item.active-sidebar:hover .sidebar-item-icon svg {
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
 /* Sidebar icons - SVG elements with proper fill and stroke colors */
 .sidebar-item-icon svg {
     fill: var(--sidebar-bg,#f8f8f8) !important;
     stroke: var(--sidebar-text-color,#525252) !important;
+}
+
+/* Sidebar icons hover state - SVG elements with hover colors */
+.standard-sidebar-item:hover .sidebar-item-icon svg,
+.standard-sidebar-item.active-sidebar .sidebar-item-icon svg {
+    fill: var(--sidebar-hover-bg, #e9ecef) !important;
+    stroke: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Collapse sidebar link */
+.collapse-sidebar-link {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+/* Collapse sidebar link SVG icons */
+.collapse-sidebar-link svg {
+    fill: var(--sidebar-text-color, #525252) !important;
+    stroke: var(--sidebar-text-color, #525252) !important;
+}
+
+/* App switcher dropdown - main container styling */
+.app-switcher-dropdown {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.app-switcher-dropdown:hover {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* App switcher dropdown - child elements inherit colors */
+.app-switcher-dropdown .app-title,
+.app-switcher-dropdown .sidebar-item-label {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.app-switcher-dropdown:hover .app-title,
+.app-switcher-dropdown:hover .sidebar-item-label {
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* App switcher menu container */
+.app-switcher-menu {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+}
+
+/* App switcher menu items */
+.app-item {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.app-item:hover {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* App item titles */
+.app-item-title {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.app-item:hover .app-item-title {
+    color: var(--sidebar-hover-text-color, #212529) !important;
 }
 
 /* ========================================

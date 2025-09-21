@@ -286,6 +286,7 @@ class FrappeDeskTheme {
             '--btn-secondary-color', '--btn-secondary-hover-bg', '--btn-secondary-hover-color', '--body-bg',
             '--content-bg', '--table-head-bg', '--table-head-color', '--table-body-bg', '--table-body-color',
             '--hide-like-comment', '--widget-bg', '--widget-border', '--widget-color', '--sidebar-expanded',
+            '--sidebar-bg', '--sidebar-text-color', '--sidebar-hover-bg', '--sidebar-hover-text-color',
             '--login-content-border', '--login-title-display', '--login-title-after-display', 
             '--login-title-after-justify', '--login-title-after-margin', '--login-title-after-content', '--login-title-after-color',
             '--login-box-top', '--login-box-bg-override', '--login-box-border-radius', '--search-bar-display',
@@ -325,6 +326,8 @@ class FrappeDeskTheme {
         root.style.setProperty('--hide-app-switcher', 'block');
         root.style.setProperty('--app-switcher-pointer-events', 'auto');
         root.style.setProperty('--sidebar-expanded', '');
+        root.style.setProperty('--sidebar-hover-bg', '#e9ecef');
+        root.style.setProperty('--sidebar-hover-text-color', '#212529');
         root.style.setProperty('--login-box-width', '400px');
         root.style.setProperty('--search-bar-display', 'block');
         
@@ -504,6 +507,12 @@ class FrappeDeskTheme {
         }
         if (theme.sidebar_text_color) {
             root.style.setProperty('--sidebar-text-color', theme.sidebar_text_color);
+        }
+        if (theme.sidebar_hover_background_color) {
+            root.style.setProperty('--sidebar-hover-bg', theme.sidebar_hover_background_color);
+        }
+        if (theme.sidebar_hover_text_color) {
+            root.style.setProperty('--sidebar-hover-text-color', theme.sidebar_hover_text_color);
         }
 
         // Data table styling

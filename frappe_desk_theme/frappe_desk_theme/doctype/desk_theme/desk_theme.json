@@ -53,8 +53,10 @@
   "main_body_content_box_text_color",
   "sidebar_section",
   "sidebar_background_color",
+  "sidebar_hover_background_color",
   "column_break_wdml",
   "sidebar_text_color",
+  "sidebar_hover_text_color",
   "table_tab",
   "list_table_section",
   "table_head_background_color",
@@ -503,6 +505,16 @@
    "fieldname": "footer_text_color",
    "fieldtype": "Color",
    "label": "Text Color"
+  },
+  {
+   "fieldname": "sidebar_hover_background_color",
+   "fieldtype": "Color",
+   "label": "Hover Background Color"
+  },
+  {
+   "fieldname": "sidebar_hover_text_color",
+   "fieldtype": "Color",
+   "label": "Hover Text Color"
   }
  ],
  "grid_page_length": 50,
@@ -510,7 +522,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-03 13:37:21.116029",
+ "modified": "2025-09-20 18:42:32.444450",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",
