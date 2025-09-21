@@ -343,6 +343,17 @@ body {
     stroke: var(--sidebar-hover-text-color, #212529) !important;
 }
 
+/* Collapse sidebar link */
+.collapse-sidebar-link {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+/* Collapse sidebar link SVG icons */
+.collapse-sidebar-link svg {
+    fill: var(--sidebar-text-color, #525252) !important;
+    stroke: var(--sidebar-text-color, #525252) !important;
+}
+
 /* App switcher dropdown - main container styling */
 .app-switcher-dropdown {
     background-color: var(--sidebar-bg, #f8f8f8) !important;
@@ -365,6 +376,11 @@ body {
     color: var(--sidebar-hover-text-color, #212529) !important;
 }
 
+/* App switcher menu container */
+.app-switcher-menu {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+}
+
 /* App switcher menu items */
 .app-item {
     background-color: var(--sidebar-bg, #f8f8f8) !important;
@@ -383,27 +399,6 @@ body {
 
 .app-item:hover .app-item-title {
     color: var(--sidebar-hover-text-color, #212529) !important;
-}
-
-/* Collapse sidebar link */
-.collapse-sidebar-link {
-    color: var(--sidebar-text-color, #525252) !important;
-}
-
-.collapse-sidebar-link:hover {
-    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
-    color: var(--sidebar-hover-text-color, #212529) !important;
-}
-
-/* Collapse sidebar link SVG icons */
-.collapse-sidebar-link svg {
-    fill: var(--sidebar-text-color, #525252) !important;
-    stroke: var(--sidebar-text-color, #525252) !important;
-}
-
-.collapse-sidebar-link:hover svg {
-    fill: var(--sidebar-hover-text-color, #212529) !important;
-    stroke: var(--sidebar-hover-text-color, #212529) !important;
 }
 
 /* ========================================
