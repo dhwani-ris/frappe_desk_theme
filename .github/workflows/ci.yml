@@ -126,20 +126,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pip-audit
-          npm ci
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else echo "No npm lockfile, skipping npm ci"; fi
 
       - name: Check for outdated Python dependencies
         run: |
           pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip show || echo "No outdated Python packages found"
 
       - name: Check for outdated Node.js dependencies
-        run: npm outdated || echo "No outdated Node.js packages found"
+        run: |
+          if [ -f package.json ]; then npm outdated || echo "No outdated Node.js packages found"; else echo "No package.json, skipping npm outdated"; fi
 
       - name: Run pip-audit
         run: |
@@ -169,13 +169,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build
-          npm ci
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else echo "No npm lockfile, skipping npm ci"; fi
 
       - name: Build Python package
         run: |
@@ -183,7 +182,7 @@ jobs:
 
       - name: Build frontend assets
         run: |
-          npm run build || echo "No build script found"
+          if [ -f package.json ]; then npm run build || echo "No build script found"; else echo "No package.json, skipping frontend build"; fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
