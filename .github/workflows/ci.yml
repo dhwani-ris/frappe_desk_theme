@@ -1,11 +1,13 @@
 name: CI
 
 on:
+  # Workflow disabled - uncomment below to re-enable
+  # push:
+  #   branches: [ main, develop, development, master ]
+  # workflow_dispatch:
   push:
-    branches: [ main, develop, development, master ]
-  pull_request:
-    branches: [ main, develop, development, master ]
-  workflow_dispatch:
+    branches:
+      - 'never-run-this-workflow-disabled-branch-12345'
 
 permissions:
   contents: read
