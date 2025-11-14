@@ -21,22 +21,22 @@ frappe.ui.form.on("Desk Theme", {
 				method: "frappe.client.get_value",
 				args: {
 					doctype: "System Settings",
-					fieldname: "default_app"
+					fieldname: "default_app",
 				},
-				callback: function(r) {
+				callback: function (r) {
 					if (r.message && r.message.default_app) {
 						frm.set_value("default_app", r.message.default_app);
 					}
-				}
+				},
 			});
 		}
 
-        // Add refresh theme button       
-        frm.add_custom_button(__('Refresh Theme'), function() {
-            window.frappeDeskTheme?.clearCache();
-            window.frappeDeskTheme?.refreshTheme();
-            frappe.show_alert({message: __('Theme refreshed'), indicator: 'green'});
-        });
+		// Add refresh theme button
+		frm.add_custom_button(__("Refresh Theme"), function () {
+			window.frappeDeskTheme?.clearCache();
+			window.frappeDeskTheme?.refreshTheme();
+			frappe.show_alert({ message: __("Theme refreshed"), indicator: "green" });
+		});
 	},
 
 	hide_app_switcher(frm) {
@@ -46,13 +46,13 @@ frappe.ui.form.on("Desk Theme", {
 				method: "frappe.client.get_value",
 				args: {
 					doctype: "System Settings",
-					fieldname: "default_app"
+					fieldname: "default_app",
 				},
-				callback: function(r) {
+				callback: function (r) {
 					if (r.message && r.message.default_app) {
 						frm.set_value("default_app", r.message.default_app);
 					}
-				}
+				},
 			});
 		} else {
 			// Clear default_app when hide_app_switcher is unchecked
@@ -73,17 +73,17 @@ frappe.ui.form.on("Desk Theme", {
 			frappe.call({
 				method: "frappe_desk_theme.frappe_desk_theme.doctype.desk_theme.desk_theme.update_system_default_app",
 				args: {
-					default_app: frm.doc.default_app
+					default_app: frm.doc.default_app,
 				},
-				callback: function(r) {
+				callback: function (r) {
 					if (r.message && r.message.success) {
 						frappe.show_alert({
 							message: __("System default app updated successfully"),
-							indicator: "green"
+							indicator: "green",
 						});
 					}
-				}
+				},
 			});
 		}
-	}
+	},
 });
