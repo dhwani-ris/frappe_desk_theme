@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -11,4 +12,4 @@ class DeskThemeCarouselImages(Document):
 		if self.image:
 			file_doc = frappe.get_doc("File", {"file_url": self.image})
 			if file_doc.file_size > 1 * 1024 * 1024:
-				frappe.throw("Carousel image size must be 1 MB or less.")
+				frappe.throw(_("Carousel image size must be 1 MB or less."))
