@@ -25,8 +25,13 @@ app_license = "mit"
 # ------------------
 # include js, css files in header of desk.html
 app_include_css = "/assets/frappe_desk_theme/css/frappe_desk_theme.bundle.css"
-app_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
+# app_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
 
+app_include_js = [
+	"/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js",
+	"/assets/frappe_desk_theme/js/sidebar/sidebar_override.js",
+	"/assets/frappe_desk_theme/js/sidebar/breadcrumb_override.js",
+]
 # include js, css files in header of web template
 web_include_css = "/assets/frappe_desk_theme/css/frappe_desk_theme.bundle.css"
 web_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
@@ -235,4 +240,3 @@ web_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
