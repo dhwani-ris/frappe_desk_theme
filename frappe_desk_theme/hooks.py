@@ -55,7 +55,7 @@ web_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "frappe_desk_theme/public/icons.svg"
+app_include_icons = "/assets/frappe_desk_theme/icons.svg"
 
 # Home Pages
 # ----------
