@@ -1,0 +1,162 @@
+name: Dhwani Release Bot Handler
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ main, master ]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+  actions: write
+
+jobs:
+  handle-bot-mention:
+    name: Handle Bot Commands
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.issue_comment.body != null && contains(github.event.issue_comment.body, '@dhwani-release-bot')) ||
+      (github.event.pull_request.body != null && contains(github.event.pull_request.body, '@dhwani-release-bot'))
+    
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.DHWANI_RELEASE_BOT_APP_ID }}
+          private_key: ${{ secrets.DHWANI_RELEASE_BOT_PRIVATE_KEY }}
+      
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          fetch-depth: 0
+      
+      - name: Parse Bot Command
+        id: parse-command
+        run: |
+          if [ "${{ github.event_name }}" == "issue_comment" ]; then
+            COMMENT_BODY="${{ github.event.issue_comment.body }}"
+          else
+            COMMENT_BODY="${{ github.event.pull_request.body }}"
+          fi
+          
+          echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Extract command after @dhwani-release-bot
+          COMMAND=$(echo "$COMMENT_BODY" | grep -oP '@dhwani-release-bot\s+\K\S+' | head -1 || echo "")
+          
+          if [ -z "$COMMAND" ]; then
+            COMMAND="help"
+          fi
+          
+          echo "command=$COMMAND" >> $GITHUB_OUTPUT
+          echo "Command detected: $COMMAND"
+      
+      - name: Handle Release Command
+        if: steps.parse-command.outputs.command == 'release' || steps.parse-command.outputs.command == 'trigger-release'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const context = github.context;
+            const command = '${{ steps.parse-command.outputs.command }}';
+            
+            // Trigger the release workflow
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'release.yml',
+              ref: context.ref || 'main'
+            });
+            
+            // Add a comment
+            const comment = `🚀 Release workflow triggered by @${context.actor}!\n\nI've started the semantic release process. Check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions) for progress.`;
+            
+            if (context.eventName === 'issue_comment') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            } else if (context.eventName === 'pull_request') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: comment
+              });
+            }
+      
+      - name: Handle Help Command
+        if: steps.parse-command.outputs.command == 'help' || steps.parse-command.outputs.command == ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const context = github.context;
+            const helpText = `## 🤖 Dhwani Release Bot Commands
+            
+            Available commands:
+            
+            - \`@dhwani-release-bot release\` or \`@dhwani-release-bot trigger-release\` - Trigger a semantic release
+            - \`@dhwani-release-bot help\` - Show this help message
+            
+            ### How it works:
+            - The bot automatically creates releases when code is pushed to \`main\` or \`master\` branches
+            - You can also manually trigger releases using the commands above
+            - Developers can commit normally - the bot only handles releases
+            
+            Need help? Check the [workflow documentation](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/release.yml).`;
+            
+            if (context.eventName === 'issue_comment') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: helpText
+              });
+            } else if (context.eventName === 'pull_request') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: helpText
+              });
+            }
+      
+      - name: Handle Unknown Command
+        if: steps.parse-command.outputs.command != 'release' && steps.parse-command.outputs.command != 'trigger-release' && steps.parse-command.outputs.command != 'help' && steps.parse-command.outputs.command != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const context = github.context;
+            const command = '${{ steps.parse-command.outputs.command }}';
+            const unknownCommandText = `❓ Unknown command: \`${command}\`
+            
+            Type \`@dhwani-release-bot help\` to see available commands.`;
+            
+            if (context.eventName === 'issue_comment') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: unknownCommandText
+              });
+            } else if (context.eventName === 'pull_request') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: unknownCommandText
+              });
+            }
+
