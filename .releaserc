@@ -1,21 +1,79 @@
 {
 	"branches": ["main", "master"],
 	"plugins": [
-		["@semantic-release/commit-analyzer", {
-			"preset": "angular"
-		}],
-		"@semantic-release/release-notes-generator",
 		[
-			"@semantic-release/exec", {
+			"@semantic-release/commit-analyzer",
+			{
+				"preset": "angular",
+				"releaseRules": [
+					{ "type": "feat", "release": "minor" },
+					{ "type": "fix", "release": "patch" },
+					{ "type": "perf", "release": "patch" },
+					{ "type": "revert", "release": "patch" },
+					{ "type": "docs", "release": false },
+					{ "type": "style", "release": false },
+					{ "type": "chore", "release": false },
+					{ "type": "refactor", "release": false },
+					{ "type": "test", "release": false },
+					{ "type": "build", "release": false },
+					{ "type": "ci", "release": false },
+					{ "breaking": true, "release": "major" }
+				],
+				"parserOpts": {
+					"noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES"]
+				}
+			}
+		],
+		[
+			"@semantic-release/release-notes-generator",
+			{
+				"preset": "angular",
+				"presetConfig": {
+					"types": [
+						{ "type": "feat", "section": "✨ Features" },
+						{ "type": "fix", "section": "🐛 Bug Fixes" },
+						{ "type": "perf", "section": "⚡ Performance Improvements" },
+						{ "type": "revert", "section": "⏪ Reverts" },
+						{ "type": "docs", "section": "📝 Documentation", "hidden": false },
+						{ "type": "style", "section": "💎 Styles", "hidden": false },
+						{ "type": "refactor", "section": "♻️ Code Refactoring", "hidden": false },
+						{ "type": "test", "section": "✅ Tests", "hidden": false },
+						{ "type": "build", "section": "🏗️ Build System", "hidden": false },
+						{ "type": "ci", "section": "👷 Continuous Integration", "hidden": false },
+						{ "type": "chore", "section": "🔧 Miscellaneous Chores", "hidden": false }
+					]
+				},
+				"writerOpts": {
+					"commitsSort": ["scope", "subject"]
+				}
+			}
+		],
+		[
+			"@semantic-release/changelog",
+			{
+				"changelogFile": "CHANGELOG.md"
+			}
+		],
+		[
+			"@semantic-release/exec",
+			{
 				"prepareCmd": "python $GITHUB_WORKSPACE/.github/helper/update-version.py ${nextRelease.version}"
 			}
 		],
 		[
-			"@semantic-release/git", {
-				"assets": ["*/__init__.py"],
-				"message": "chore(release): Bumped to Version ${nextRelease.version}"
+			"@semantic-release/git",
+			{
+				"assets": ["CHANGELOG.md", "*/__init__.py"],
+				"message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
 			}
 		],
-		"@semantic-release/github"
+		[
+			"@semantic-release/github",
+			{
+				"successComment": false,
+				"releasedLabels": false,
+				"assets": []
+			}
+		]
 	]
 }
