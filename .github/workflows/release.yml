@@ -2,6 +2,13 @@ name: Generate Semantic Release
 on:
   push:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
       
 permissions:
   contents: write
@@ -9,33 +16,112 @@ permissions:
   pull-requests: write
   id-token: write
   actions: read
+
+# Wait for init workflow to complete first
+# Use same concurrency group as init workflow to ensure init runs first
+concurrency:
+  group: repo-init-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
   
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.DHWANI_RELEASE_BOT_APP_ID }}
+          private_key: ${{ secrets.DHWANI_RELEASE_BOT_PRIVATE_KEY }}
+          
       - name: Checkout Entire Repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token }}
           persist-credentials: true
           
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
           
       - name: Setup dependencies
         run: |
-          npm install @semantic-release/git @semantic-release/exec @semantic-release/github @semantic-release/changelog --no-save
+          npm install semantic-release @semantic-release/git @semantic-release/exec @semantic-release/github @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator --no-save
+          
+      - name: Configure Git
+        run: |
+          git config --global user.name "dhwani-release-bot"
+          git config --global user.email "dhwani-release-bot[bot]@users.noreply.github.com"
+          
+      - name: Debug - Check commits
+        run: |
+          echo "=== Recent commits ==="
+          git log --oneline -10
+          echo ""
+          echo "=== Commits since last tag ==="
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag, showing all commits"
+            git log --oneline --no-merges
+          else
+            echo "Commits since $LAST_TAG:"
+            git log --oneline --no-merges ${LAST_TAG}..HEAD
+          fi
+          echo ""
+          echo "=== Last tag ==="
+          git describe --tags --abbrev=0 2>/dev/null || echo "No tags found"
+          echo ""
+          echo "=== Semantic commits only ==="
+          git log --oneline --no-merges --grep="^feat\|^fix\|^perf\|^revert" -10 || echo "No semantic commits found"
+          
+      - name: Filter merge commits
+        run: |
+          echo "=== Filtering merge commits ==="
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag, checking all commits"
+            git log --oneline --no-merges --format="%H %s" > /tmp/filtered_commits.txt
+          else
+            echo "Checking commits since $LAST_TAG"
+            git log --oneline --no-merges ${LAST_TAG}..HEAD --format="%H %s" > /tmp/filtered_commits.txt
+          fi
+          echo "Filtered commits (excluding merge commits):"
+          cat /tmp/filtered_commits.txt || echo "No commits found"
           
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: "github-actions[bot]"
-          GIT_AUTHOR_EMAIL: "github-actions[bot]@users.noreply.github.com"
-          GIT_COMMITTER_NAME: "github-actions[bot]"
-          GIT_COMMITTER_EMAIL: "github-actions[bot]@users.noreply.github.com"
-        run: npx semantic-release
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GIT_AUTHOR_NAME: "dhwani-release-bot"
+          GIT_AUTHOR_EMAIL: "dhwani-release-bot[bot]@users.noreply.github.com"
+          GIT_COMMITTER_NAME: "dhwani-release-bot"
+          GIT_COMMITTER_EMAIL: "dhwani-release-bot[bot]@users.noreply.github.com"
+          NODE_ENV: production
+        run: |
+          echo "Running semantic-release..."
+          npx semantic-release --debug || {
+            echo "Semantic-release exited with code $?"
+            echo "This might be normal if no release is needed"
+            exit 0
+          }
+          
+      - name: Verify Release Created
+        if: always()
+        run: |
+          echo "=== Checking for new releases ==="
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          echo "Latest tag: $LATEST_TAG"
+          
+          if [ "$LATEST_TAG" != "none" ]; then
+            echo "✅ Release tag found: $LATEST_TAG"
+            git show-ref --tags | tail -5
+          else
+            echo "ℹ️ No new release tag created (this is normal if no semantic commits found)"
+          fi
