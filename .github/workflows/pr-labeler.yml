@@ -4,7 +4,7 @@ name: "PR Labeler"
 on:
   pull_request:
     types: [opened, reopened]
-    branches: [main, master, develop, development, uat] # Label PRs to these branches
+    branches: [main, master] # Label PRs to these branches
 
 permissions:
   contents: read
@@ -13,8 +13,8 @@ permissions:
 jobs:
   label:
     runs-on: ubuntu-latest
-    # Only run for PRs targeting main, master, develop, development, or uat branches
-    if: contains(fromJson('["main", "master", "develop", "development", "uat"]'), github.event.pull_request.base.ref)
+    # Only run for PRs targeting main or master branches
+    if: contains(fromJson('["main", "master"]'), github.event.pull_request.base.ref)
     steps:
       - name: Auto Label PR
         uses: actions/github-script@v7
@@ -58,12 +58,6 @@ jobs:
             if (targetBranch === 'main' || targetBranch === 'master') {
               labels.push('release');
               console.log('🚀 Production release PR');
-            } else if (targetBranch === 'uat') {
-              labels.push('uat-release');
-              console.log('🧪 UAT release PR');
-            } else if (targetBranch === 'develop' || targetBranch === 'development') {
-              labels.push('development');
-              console.log('🛠️ Development PR');
             }
 
             // Add labels with error handling
