@@ -1,0 +1,90 @@
+name: Auto Request Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, master ]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  request-review:
+    name: Request Review from Default Reviewer
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.base.ref == 'main' || 
+      github.event.pull_request.base.ref == 'master'
+    
+    steps:
+      - name: Request review from default reviewer
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const reviewer = 'dhwani-ankit';
+            const pr = context.payload.pull_request;
+            
+            console.log(`Processing PR #${pr.number} targeting ${pr.base.ref}`);
+            
+            // Check if PR is not in draft state
+            if (pr.draft) {
+              console.log('PR is in draft state, skipping review request');
+              return;
+            }
+            
+            // Wait a bit to ensure PR is fully ready
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            try {
+              // Get current reviewers
+              const { data: currentReviews } = await github.rest.pulls.listRequestedReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+              });
+              
+              console.log('Current reviewers:', JSON.stringify(currentReviews, null, 2));
+              
+              // Check if reviewer is already requested
+              const isAlreadyRequested = currentReviews.users?.some(
+                user => user.login.toLowerCase() === reviewer.toLowerCase()
+              ) || currentReviews.teams?.some(
+                team => team.slug.toLowerCase() === reviewer.toLowerCase()
+              );
+              
+              if (isAlreadyRequested) {
+                console.log(`✅ Review already requested from ${reviewer}`);
+                return;
+              }
+              
+              // Request review from default reviewer
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                reviewers: [reviewer],
+              });
+              
+              console.log(`✅ Successfully requested review from ${reviewer}`);
+            } catch (error) {
+              console.error(`❌ Error requesting review from ${reviewer}:`, error);
+              console.error('Error details:', JSON.stringify(error, null, 2));
+              
+              // If user not found, try to add as assignee instead
+              if (error.status === 422 || error.message.includes('not found')) {
+                try {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pr.number,
+                    assignees: [reviewer],
+                  });
+                  console.log(`✅ Added ${reviewer} as assignee instead`);
+                } catch (assignError) {
+                  console.error(`⚠️ Could not add ${reviewer} as assignee:`, assignError.message);
+                }
+              }
+            }
+
