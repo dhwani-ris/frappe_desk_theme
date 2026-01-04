@@ -1,0 +1,234 @@
+name: Enhanced Security Scan
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [ main, master ]
+  schedule:
+    # Run daily security scans on main/master
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript']
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+  
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  dependency-scanning:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit --desc --format json --output pip-audit-report.json || true
+      
+      - name: Run Safety Check
+        run: |
+          pip install safety
+          safety check --json --output safety-report.json || true
+      
+      - name: Run Bandit Security Scan
+        run: |
+          pip install bandit[toml]
+          bandit -r . -f json -o bandit-report.json || true
+      
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-${{ github.run_id }}
+          path: |
+            pip-audit-report.json
+            safety-report.json
+            bandit-report.json
+          retention-days: 30
+      
+      - name: Comment PR with findings
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let comment = '## 🔒 Security Scan Results\n\n';
+            let hasIssues = false;
+            
+            // Check pip-audit
+            try {
+              if (fs.existsSync('pip-audit-report.json')) {
+                const report = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+                if (report.vulnerabilities && report.vulnerabilities.length > 0) {
+                  hasIssues = true;
+                  comment += `### ⚠️ Dependency Vulnerabilities Found\n\n`;
+                  comment += `Found ${report.vulnerabilities.length} vulnerable dependency(ies).\n\n`;
+                  report.vulnerabilities.slice(0, 10).forEach(vuln => {
+                    comment += `- **${vuln.name}**: ${vuln.id} - ${vuln.fix_versions ? `Fix: ${vuln.fix_versions.join(', ')}` : 'No fix available'}\n`;
+                  });
+                  comment += `\n`;
+                }
+              }
+            } catch (e) {
+              console.log('Error reading pip-audit report:', e);
+            }
+            
+            // Check safety
+            try {
+              if (fs.existsSync('safety-report.json')) {
+                const report = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+                if (report.vulnerabilities && report.vulnerabilities.length > 0) {
+                  hasIssues = true;
+                  comment += `### ⚠️ Safety Check Findings\n\n`;
+                  comment += `Found ${report.vulnerabilities.length} issue(s).\n\n`;
+                }
+              }
+            } catch (e) {
+              console.log('Error reading safety report:', e);
+            }
+            
+            // Check bandit
+            try {
+              if (fs.existsSync('bandit-report.json')) {
+                const report = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+                if (report.metrics && report.metrics._totals) {
+                  const totals = report.metrics._totals;
+                  if (totals.HIGH > 0 || totals.MEDIUM > 0) {
+                    hasIssues = true;
+                    comment += `### ⚠️ Code Security Issues (Bandit)\n\n`;
+                    comment += `- High: ${totals.HIGH}\n`;
+                    comment += `- Medium: ${totals.MEDIUM}\n`;
+                    comment += `- Low: ${totals.LOW}\n\n`;
+                  }
+                }
+              }
+            } catch (e) {
+              console.log('Error reading bandit report:', e);
+            }
+            
+            if (!hasIssues) {
+              comment += '✅ No security issues detected in this scan.\n';
+            } else {
+              comment += '\n📋 Full reports are available in the workflow artifacts.\n';
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  container-scanning:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: hashFiles('**/Dockerfile') != ''
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, secret-scanning, dependency-scanning]
+    if: always()
+    
+    steps:
+      - name: Generate Security Summary
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const needs = ${{ toJSON(needs) }};
+            const summary = `## 🔒 Security Scan Summary
+            
+            | Scan Type | Status |
+            |-----------|--------|
+            | CodeQL Analysis | ${needs.codeql-analysis.result === 'success' ? '✅ Passed' : needs.codeql-analysis.result === 'failure' ? '❌ Failed' : '⚠️ Skipped'} |
+            | Secret Scanning | ${needs.secret-scanning.result === 'success' ? '✅ Passed' : needs.secret-scanning.result === 'failure' ? '❌ Failed' : '⚠️ Skipped'} |
+            | Dependency Scan | ${needs.dependency-scanning.result === 'success' ? '✅ Passed' : needs.dependency-scanning.result === 'failure' ? '❌ Failed' : '⚠️ Skipped'} |
+            
+            **View detailed results in the Security tab or workflow artifacts.**`;
+            
+            core.summary.addRaw(summary).write();
+
