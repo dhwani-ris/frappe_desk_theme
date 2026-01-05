@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, develop, development ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, develop, development ]
   workflow_dispatch:
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
     name: 'Vulnerable Dependency Check'
     runs-on: ubuntu-latest
     # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
 
     steps:
       - name: Setup Python
@@ -51,7 +51,7 @@ jobs:
     name: 'Test'
     runs-on: ubuntu-latest
     # Run on both PR and merge
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
     strategy:
       matrix:
         python-version: ["3.8", "3.11", "3.13"]
@@ -111,7 +111,7 @@ jobs:
     name: 'Frappe Bench App Tests'
     runs-on: ubuntu-latest
     # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
     
     services:
       mariadb:
@@ -356,7 +356,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
 
     steps:
       - name: Checkout code
