@@ -2,8 +2,10 @@ name: Quality Checks
 
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, develop, development ]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [ develop, development ]
   workflow_dispatch:
 
 permissions:
@@ -64,7 +66,7 @@ jobs:
   docs-required:
     name: 'Documentation Required'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
 
     steps:
       - name: 'Setup Environment'
@@ -96,7 +98,7 @@ jobs:
   linter:
     name: 'Semgrep Rules'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
 
     steps:
       - uses: actions/checkout@v4
@@ -116,7 +118,7 @@ jobs:
   precommit:
     name: 'Pre-Commit'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
 
     steps:
       - uses: actions/checkout@v4
