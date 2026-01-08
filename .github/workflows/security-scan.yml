@@ -1,9 +1,7 @@
 name: Enhanced Security Scan
 
 on:
-  pull_request:
-    branches: [ main, master ]
-    types: [opened, synchronize, reopened, ready_for_review]
+  # Only run on push to main/master (after merge) - not on PRs to avoid duplicates
   push:
     branches: [ main, master ]
   schedule:
