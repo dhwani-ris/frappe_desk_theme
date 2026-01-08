@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Run on push only for main/master (merged code validation)
   push:
-    branches: [ main, master, develop, development ]
+    branches: [ main, master ]
+  # Run on PRs for all branches (pre-merge validation)
   pull_request:
     branches: [ main, master, develop, development ]
   workflow_dispatch:
@@ -11,9 +13,8 @@ permissions:
   contents: read
 
 # Wait for init workflow to complete first (for push to main/master)
-# Use same concurrency group as init workflow to ensure init runs first
 concurrency:
-  group: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && format('repo-init-{0}-{1}', github.repository, github.ref) || format('ci-{0}-{1}-{2}', github.event_name, github.ref, github.event.number || github.sha) }}
+  group: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && format('repo-init-{0}-{1}', github.repository, github.ref) || format('ci-{0}-{1}', github.repository, github.ref) }}
   cancel-in-progress: false
 
 jobs:
