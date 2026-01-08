@@ -1,19 +1,14 @@
 name: Quality Checks
 
 on:
+  # Only run on PRs - no push trigger to avoid duplicates
   pull_request:
     branches: [ main, master, develop, development ]
     types: [opened, synchronize, reopened, ready_for_review]
-  push:
-    branches: [ develop, development ]
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: commitcheck-frappe-${{ github.event_name }}-${{ github.event.number }}
-  cancel-in-progress: true
 
 jobs:
   commit-lint:
@@ -144,8 +139,9 @@ jobs:
       - name: Run pre-commit (check only, no auto-fix)
         run: |
           # Run pre-commit in CI mode - it will check but not modify files
+          # Skip no-commit-to-branch hook in CI (it's meant for local development)
           # This will fail if files need formatting, which is what we want
-          pre-commit run --all-files --show-diff-on-failure || {
+          SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure || {
             echo "❌ Pre-commit checks failed. Some files need formatting or have issues."
             echo "Please run 'pre-commit run --all-files' locally to fix the issues."
             exit 1
