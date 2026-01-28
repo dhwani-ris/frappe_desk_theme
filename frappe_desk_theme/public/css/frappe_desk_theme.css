@@ -1,9 +1,9 @@
 /**
  * Frappe Desk Theme - Custom CSS Styling
- * 
+ *
  * This stylesheet provides comprehensive theming support for Frappe Desk through CSS custom properties.
  * It covers login page customization, navigation styling, form elements, tables, widgets, and responsive design.
- * 
+ *
  * The theme system works by:
  * 1. JavaScript sets CSS custom properties (--variable-name) based on theme configuration
  * 2. CSS rules use these variables with var() function for dynamic styling
@@ -121,7 +121,7 @@ label.control-label {
 /* Login content border - customizable border for form container */
 /* .login-content, .forgot-content, .signup-content {
     border: var(--login-content-border,none);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 } */
 
 /* Signup message - when app details are inside the box, make it part of the container */
@@ -151,7 +151,7 @@ label.control-label {
 /* Page headings - consistent styling for all page titles */
 .page-card-head h4 {
     color: var(--page-heading-color) !important;
-} 
+}
 
 /* ========================================
    NAVIGATION BAR STYLING
@@ -430,7 +430,7 @@ div.level-right {
 .widget.dashboard-widget-box {
     background-color: var(--widget-bg);
     border: 2px solid var(--widget-border);
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Widget content - all text elements within widgets */
@@ -452,7 +452,7 @@ div.level-right {
     .for-login {
         position: static;
     }
-    
+
     /* Login form width - allows full width on mobile devices */
     .login-content.page-card {
         width: auto;
@@ -578,7 +578,7 @@ body.has-sticky-footer:not(:has(.main-section)) {
     .desk-footer {
         margin-left: 0 !important;
     }
-    
+
     .desk-footer.sticky {
         left: 0 !important;
     }
@@ -591,12 +591,12 @@ body.has-sticky-footer:not(:has(.main-section)) {
         padding: 12px 15px;
         gap: 8px;
     }
-    
+
     .desk-footer-left,
     .desk-footer-right {
         justify-content: center;
     }
-    
+
     .main-section.has-sticky-footer,
     body.has-sticky-footer .main-section,
     body.has-sticky-footer:not(:has(.main-section)) {
