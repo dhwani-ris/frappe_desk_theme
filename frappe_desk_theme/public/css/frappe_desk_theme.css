@@ -159,37 +159,53 @@ label.control-label {
 
 /* Main navigation bar - top-level container with custom background */
 .navbar {
-    background-color: var(--navbar-bg, #fff);
+    background-color: var(--navbar-bg, #fff) !important;
+    color: var(--navbar-color, #ffffff) !important;
 }
 
-/* Navbar text elements - brand name and container text color */
-.navbar.container,
-.navbar-brand {
-    color: var(--navbar-color, #555);
+.navbar,
+.navbar * {
+    color: var(--navbar-color, #ffffff) !important;
 }
 
-/* Navbar icons and toggle button - ensures consistent coloring for SVG elements */
-.navbar-toggler,
-.navbar-toggler span svg,
-.navbar svg.es-icon.icon-sm use,
-.notifications-seen > .es-icon {
-    fill: var(--navbar-color);
-    stroke-width: 0;
+/* Page header bar - the main header bar in Frappe (form view, list view, workspace) */
+.page-head {
+    background-color: var(--page-header-bg, var(--navbar-bg, #fff)) !important;
+    border-bottom-color: var(--page-header-bg, var(--navbar-bg, #fff)) !important;
 }
 
-/* Mobile menu toggle button - border color for hamburger menu */
-button.navbar-toggler {
-    border-color: var(--navbar-color) !important;
+/* Apply white text color to page-head content, but exclude indicators and buttons */
+.page-head > *:not(.indicator-pill):not(button):not(.btn):not([role="button"]),
+.page-head .page-title,
+.page-head .page-title *:not(.indicator-pill):not(.indicator-pill *),
+.page-head .navbar-breadcrumbs,
+.page-head .navbar-breadcrumbs *:not(.indicator-pill):not(.indicator-pill *) {
+    color: var(--page-header-color, var(--navbar-color, #ffffff)) !important;
 }
 
-/* Breadcrumb navigation links - maintains consistent color scheme */
-#navbar-breadcrumbs li a {
-    color: var(--navbar-color);
+/* Override desk.bundle.css rule for last breadcrumb item - more specific selector */
+.page-head .navbar-breadcrumbs li:last-child > a,
+.page-head .navbar-breadcrumbs li:nth-child(2) > a,
+.page-head .navbar-breadcrumbs li:nth-child(3) > a {
+    color: var(--page-header-color, var(--navbar-color, #ffffff)) !important;
 }
 
-/* Breadcrumb separators - adds arrow separators between breadcrumb items */
-#navbar-breadcrumbs li a::before {
-    content: '›';
+/* Change button background to white and text to black - all states (exclude primary buttons) */
+.page-head button:not(.btn-primary),
+.page-head .btn:not(.btn-primary),
+.page-head [role="button"]:not(.btn-primary),
+.page-head button:not(.btn-primary):active,
+.page-head .btn:not(.btn-primary):active,
+.page-head [role="button"]:not(.btn-primary):active,
+.page-head button:not(.btn-primary) *,
+.page-head .btn:not(.btn-primary) *,
+.page-head [role="button"]:not(.btn-primary) *,
+.page-head button:not(.btn-primary):active *,
+.page-head .btn:not(.btn-primary):active *,
+.page-head [role="button"]:not(.btn-primary):active * {
+    background-color: var(--page-header-btn-bg, #ffffff) !important;
+    color: var(--page-header-btn-color, #000000) !important;
+    border-color: var(--page-header-btn-border-color, #000000) !important;
 }
 
 /* Disabled breadcrumb items - styling for non-clickable breadcrumb elements */
@@ -200,6 +216,22 @@ button.navbar-toggler {
 /* Navigation link buttons - text and icon color consistency */
 .btn-reset.nav-link span {
     color: var(--navbar-color) !important;
+}
+
+/* Sidebar user menu button - use sidebar text color instead of navbar color */
+.body-sidebar .btn-reset.nav-link,
+.body-sidebar .btn-reset.nav-link *,
+.body-sidebar .btn-reset.nav-link span,
+.body-sidebar .btn-reset.nav-link span * {
+    color: var(--sidebar-text-color, #ffffff) !important;
+}
+
+/* Sidebar user menu button icons */
+.body-sidebar .btn-reset.nav-link span svg,
+.body-sidebar .btn-reset.nav-link span svg use,
+.body-sidebar .btn-reset.nav-link svg {
+    stroke: var(--sidebar-text-color, #ffffff) !important;
+    fill: var(--sidebar-text-color, #ffffff) !important;
 }
 
 /* Navigation link icons - ensures SVG icons match navbar color scheme */
@@ -215,39 +247,73 @@ button.navbar-toggler {
 
 /* Primary buttons - main action buttons throughout the application */
 .btn-primary,
-.btn-primary:active {
-    background-color: var(--btn-primary-bg,#171717) !important;
+.btn-primary:active,
+button.btn-primary,
+button.btn-primary:active {
+    background-color: var(--btn-primary-bg, #171717) !important;
 }
 
 /* Primary button text - ensures text visibility on custom backgrounds */
+.btn-primary,
+.btn-primary:active,
+.btn-primary *,
+.btn-primary:active *,
 .btn-primary span,
-.btn-primary:active span {
-    color: var(--btn-primary-color) !important;
+.btn-primary:active span,
+button.btn-primary,
+button.btn-primary:active,
+button.btn-primary *,
+button.btn-primary:active * {
+    color: var(--btn-primary-color, #ffffff) !important;
 }
 
 /* Primary button hover state - provides visual feedback on mouse over */
-.btn-primary:hover {
-    background-color: var(--btn-primary-hover-bg);
+.btn-primary:hover,
+button.btn-primary:hover {
+    background-color: var(--btn-primary-hover-bg, var(--btn-primary-bg, #fff)) !important;
 }
 
 /* Primary button hover text - maintains readability during hover state */
-.btn-primary:hover span {
-    color: var(--btn-primary-hover-color);
+.btn-primary:hover,
+.btn-primary:hover *,
+.btn-primary:hover span,
+button.btn-primary:hover,
+button.btn-primary:hover * {
+    color: var(--btn-primary-hover-color, var(--btn-primary-color, #ffffff)) !important;
 }
 
 /* Secondary/default buttons - alternative action buttons with distinct styling */
 .btn.btn-default.ellipsis,
 .btn-default,
-.btn-default:active {
-    background-color: var(--btn-secondary-bg,#f3f3f3);
-    color: var(--btn-secondary-color);
+.btn-default:active,
+button.btn-default,
+button.btn-default:active {
+    background-color: var(--btn-secondary-bg, #f3f3f3) !important;
+    color: var(--btn-secondary-color, #333333) !important;
+}
+
+/* Secondary button text */
+.btn.btn-default.ellipsis *,
+.btn-default *,
+.btn-default:active *,
+button.btn-default *,
+button.btn-default:active * {
+    color: var(--btn-secondary-color, #333333) !important;
 }
 
 /* Secondary button hover effects - consistent interaction feedback */
 .btn.btn-default.ellipsis:hover,
-.btn-default:hover {
-    background-color: var(--btn-secondary-hover-bg,#f3f3f3);
-    color: var(--btn-secondary-hover-color);
+.btn-default:hover,
+button.btn-default:hover {
+    background-color: var(--btn-secondary-hover-bg, var(--btn-secondary-bg, #f3f3f3)) !important;
+    color: var(--btn-secondary-hover-color, var(--btn-secondary-color, #333333)) !important;
+}
+
+/* Secondary button hover text */
+.btn.btn-default.ellipsis:hover *,
+.btn-default:hover *,
+button.btn-default:hover * {
+    color: var(--btn-secondary-hover-color, var(--btn-secondary-color, #333333)) !important;
 }
 
 /* ========================================
