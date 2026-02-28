@@ -30,6 +30,8 @@
   "default_app",
   "column_break_jevx",
   "navbar_text_color",
+  "navbar_toggler_border_color",
+  "navbar_breadcrumb_disabled_color",
   "hide_search",
   "buttons_tab",
   "primary_button_section",
@@ -105,6 +107,16 @@
    "fieldname": "navbar_text_color",
    "fieldtype": "Color",
    "label": "Text Color"
+  },
+  {
+   "fieldname": "navbar_toggler_border_color",
+   "fieldtype": "Color",
+   "label": "Toggler Border Color"
+  },
+  {
+   "fieldname": "navbar_breadcrumb_disabled_color",
+   "fieldtype": "Color",
+   "label": "Breadcrumb Disabled Color"
   },
   {
    "fieldname": "column_break_jevx",

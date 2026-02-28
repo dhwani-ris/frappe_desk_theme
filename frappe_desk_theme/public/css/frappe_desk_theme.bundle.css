@@ -154,10 +154,10 @@ label.control-label {
 }
 
 /* ========================================
-   NAVIGATION BAR STYLING
+   NAVIGATION BAR STYLING (Desk Theme > Navbar)
    ======================================== */
 
-/* Main navigation bar - top-level container with custom background */
+/* Main navigation bar - Background Color, Text Color, Toggler Border, Breadcrumb Disabled */
 .navbar {
     background-color: var(--navbar-bg, #fff);
 }
@@ -177,24 +177,46 @@ label.control-label {
     stroke-width: 0;
 }
 
-/* Mobile menu toggle button - border color for hamburger menu */
+/* Mobile menu toggle button - border color for hamburger menu (theme: Navbar > Toggler Border Color) */
 button.navbar-toggler {
-    border-color: var(--navbar-color) !important;
+    border-color: var(--navbar-toggler-border, var(--navbar-color, #dee2e6)) !important;
 }
 
-/* Breadcrumb navigation links - maintains consistent color scheme */
-#navbar-breadcrumbs li a {
-    color: var(--navbar-color);
+/* Page head bar - navbar background only (override any body-bg inheritance or other rules) */
+.page-head,
+.page-head.flex {
+    background-color: var(--navbar-bg, #fff) !important;
 }
 
-/* Breadcrumb separators - adds arrow separators between breadcrumb items */
-#navbar-breadcrumbs li a::before {
-    content: '›';
+/* Page head breadcrumbs - override Frappe's ink-gray vars; use Desk Theme Navbar colors */
+.page-head .navbar-breadcrumbs li a {
+    color: var(--navbar-color, #555) !important;
 }
 
-/* Disabled breadcrumb items - styling for non-clickable breadcrumb elements */
-#navbar-breadcrumbs li.disabled a {
-    color: var(--navbar-color) !important;
+.page-head .navbar-breadcrumbs li a svg,
+.page-head .navbar-breadcrumbs li a svg use {
+    fill: var(--navbar-color, #555) !important;
+    stroke: var(--navbar-color, #555) !important;
+}
+
+/* Breadcrumb separators - match navbar color (Frappe uses "/", we keep theme color) */
+.page-head .navbar-breadcrumbs li a::before {
+    color: var(--navbar-color, #555) !important;
+}
+
+/* Last/current breadcrumb item - Desk Theme Breadcrumb Disabled Color (overrides Frappe's li:last-child) */
+.page-head .navbar-breadcrumbs li.disabled a,
+.page-head .navbar-breadcrumbs li:last-child a {
+    color: var(--breadcrumb-disabled-color, var(--navbar-color, #6c757d)) !important;
+}
+
+/* Sidebar toggle in page head - match navbar color */
+.page-head .sidebar-toggle-btn.navbar-brand,
+.page-head .sidebar-toggle-btn.navbar-brand svg,
+.page-head .sidebar-toggle-btn.navbar-brand svg use {
+    color: var(--navbar-color, #555) !important;
+    fill: var(--navbar-color, #555) !important;
+    stroke: var(--navbar-color, #555) !important;
 }
 
 /* Navigation link buttons - text and icon color consistency */
@@ -210,10 +232,10 @@ button.navbar-toggler {
 }
 
 /* ========================================
-   BUTTON STYLING
+   BUTTON STYLING (Desk Theme > Buttons)
    ======================================== */
 
-/* Primary buttons - main action buttons throughout the application */
+/* Primary buttons - Background/Text/Hover from theme */
 .btn-primary,
 .btn-primary:active {
     background-color: var(--btn-primary-bg,#171717) !important;
@@ -225,14 +247,14 @@ button.navbar-toggler {
     color: var(--btn-primary-color) !important;
 }
 
-/* Primary button hover state - provides visual feedback on mouse over */
+/* Primary button hover state - fallback to primary when not set in theme */
 .btn-primary:hover {
-    background-color: var(--btn-primary-hover-bg);
+    background-color: var(--btn-primary-hover-bg, var(--btn-primary-bg, #171717));
 }
 
-/* Primary button hover text - maintains readability during hover state */
+/* Primary button hover text - fallback to primary color when not set in theme */
 .btn-primary:hover span {
-    color: var(--btn-primary-hover-color);
+    color: var(--btn-primary-hover-color, var(--btn-primary-color, #fff));
 }
 
 /* Secondary/default buttons - alternative action buttons with distinct styling */
@@ -243,11 +265,11 @@ button.navbar-toggler {
     color: var(--btn-secondary-color);
 }
 
-/* Secondary button hover effects - consistent interaction feedback */
+/* Secondary button hover effects - fallback to secondary when not set in theme */
 .btn.btn-default.ellipsis:hover,
 .btn-default:hover {
-    background-color: var(--btn-secondary-hover-bg,#f3f3f3);
-    color: var(--btn-secondary-hover-color);
+    background-color: var(--btn-secondary-hover-bg, var(--btn-secondary-bg, #f3f3f3));
+    color: var(--btn-secondary-hover-color, var(--btn-secondary-color, inherit));
 }
 
 /* ========================================
@@ -260,8 +282,7 @@ body {
 }
 
 /* Page containers - main content wrapper background */
-.content.page-container,
-.page-head {
+.content.page-container {
     background-color: var(--body-bg,#fff);
 }
 

@@ -527,6 +527,15 @@
 		if (theme.navbar_text_color) {
 			root.style.setProperty("--navbar-color", theme.navbar_text_color);
 		}
+		if (theme.navbar_toggler_border_color) {
+			root.style.setProperty("--navbar-toggler-border", theme.navbar_toggler_border_color);
+		}
+		if (theme.navbar_breadcrumb_disabled_color) {
+			root.style.setProperty(
+				"--breadcrumb-disabled-color",
+				theme.navbar_breadcrumb_disabled_color
+			);
+		}
 		if (theme.hide_help_button !== undefined) {
 			root.style.setProperty("--hide-help", theme.hide_help_button ? "none" : "block");
 		}
@@ -541,7 +550,7 @@
 			);
 		}
 
-		// Primary button styling
+		// Primary button styling (hover fallbacks to normal when not set)
 		if (theme.button_background_color) {
 			root.style.setProperty("--btn-primary-bg", theme.button_background_color);
 		}
@@ -550,9 +559,13 @@
 		}
 		if (theme.button_hover_background_color) {
 			root.style.setProperty("--btn-primary-hover-bg", theme.button_hover_background_color);
+		} else if (theme.button_background_color) {
+			root.style.setProperty("--btn-primary-hover-bg", theme.button_background_color);
 		}
 		if (theme.button_hover_text_color) {
 			root.style.setProperty("--btn-primary-hover-color", theme.button_hover_text_color);
+		} else if (theme.button_text_color) {
+			root.style.setProperty("--btn-primary-hover-color", theme.button_text_color);
 		}
 
 		// Secondary button styling
@@ -567,11 +580,21 @@
 				"--btn-secondary-hover-bg",
 				theme.secondary_button_hover_background_color
 			);
+		} else if (theme.secondary_button_background_color) {
+			root.style.setProperty(
+				"--btn-secondary-hover-bg",
+				theme.secondary_button_background_color
+			);
 		}
 		if (theme.secondary_button_hover_text_color) {
 			root.style.setProperty(
 				"--btn-secondary-hover-color",
 				theme.secondary_button_hover_text_color
+			);
+		} else if (theme.secondary_button_text_color) {
+			root.style.setProperty(
+				"--btn-secondary-hover-color",
+				theme.secondary_button_text_color
 			);
 		}
 
@@ -798,9 +821,17 @@
 	 * default desktop / workspace landing.
 	 */
 	performInitialSidebarLoginRedirect() {
-		// Only run once per page load
-		if (this.didInitialSidebarLoginRedirect) {
-			return;
+		// Only run once per browser tab (use sessionStorage so it persists across reloads)
+		const redirectFlagKey = "frappe_desk_theme_sidebar_redirect_done";
+		try {
+			if (sessionStorage.getItem(redirectFlagKey) === "1") {
+				return;
+			}
+		} catch (e) {
+			// If sessionStorage is unavailable, fall back to in-memory flag
+			if (this.didInitialSidebarLoginRedirect) {
+				return;
+			}
 		}
 
 		// Must be enabled in theme and have a fixed sidebar configured
@@ -829,10 +860,9 @@
 		const route = frappe.get_route() || [];
 
 		// Heuristic: only redirect from generic initial desk routes
-		const isInitialDeskRoute =
-			route.length === 0 ||
-			route[0] === "desktop" ||
-			(route[0] === "Workspaces" && route.length <= 2);
+		// We *don't* treat specific workspace routes as initial, so reloads
+		// on "Workspaces / <Something>" won't be redirected.
+		const isInitialDeskRoute = route.length === 0 || route[0] === "desktop";
 
 		if (!isInitialDeskRoute) {
 			return;
@@ -854,6 +884,11 @@
 		}
 
 		this.didInitialSidebarLoginRedirect = true;
+		try {
+			sessionStorage.setItem(redirectFlagKey, "1");
+		} catch (e) {
+			// Ignore storage errors
+		}
 
 		try {
 			const linkType = (firstLink.link_type || "").toLowerCase();
