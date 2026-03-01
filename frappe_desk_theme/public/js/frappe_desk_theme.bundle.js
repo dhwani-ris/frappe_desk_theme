@@ -900,7 +900,8 @@
 				// Go to list view for the DocType
 				frappe.set_route("List", firstLink.link_to);
 			} else if (linkType === "page") {
-				frappe.set_route("Page", firstLink.link_to);
+				// Use desk/page-name instead of desk/Page/page-name
+				frappe.set_route(firstLink.link_to);
 			} else if (linkType === "report") {
 				frappe.set_route("query-report", firstLink.link_to);
 			} else if (linkType === "url") {

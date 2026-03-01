@@ -10,8 +10,9 @@ frappe.ui.Sidebar = class CustomSidebar extends frappe.ui.Sidebar {
 		const current_route = frappe.get_route();
 		if (!current_route || !current_route.length) return;
 
-		const current_item = current_route[1];
-		if (!current_item) return;
+		// For workspaces: route is ["Workspaces", workspace_name]. For doctype list: ["List", "DocType", ...].
+		// For Page doctype: route is ["page-name"] (desk/page-name) or ["Page", "page-name"] (desk/Page/page-name).
+		const current_item = current_route[1] || current_route[0];
 
 		const $match = this.$sidebar.find(`.sidebar-item-container[item-name="${current_item}"]`);
 		if ($match.length) {
@@ -36,6 +37,15 @@ frappe.ui.Sidebar = class CustomSidebar extends frappe.ui.Sidebar {
 		);
 
 		this.prepare_sidebar(root_pages, sidebar_section, this.wrapper.find(".sidebar-items"));
+
+		// Rewrite Page links from desk/Page/page-name or desk/page/page-name to desk/page-name
+		sidebar_section.find(".item-anchor[href]").each(function () {
+			const href = $(this).attr("href") || "";
+			const match = href.match(/^\/desk\/(?:Page|page)\/([^/?#]+)/);
+			if (match) {
+				$(this).attr("href", "/desk/" + match[1]);
+			}
+		});
 
 		if (Object.keys(root_pages).length === 0) {
 			sidebar_section.addClass("hidden");
