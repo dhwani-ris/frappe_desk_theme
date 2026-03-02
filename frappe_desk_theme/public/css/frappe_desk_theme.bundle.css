@@ -258,6 +258,13 @@ button.navbar-toggler {
 }
 
 /* Secondary/default buttons - alternative action buttons with distinct styling */
+.btn.btn-default.ellipsis svg,
+.btn-default svg,
+.btn-default svg use {
+    stroke: var(--btn-secondary-color);
+    fill: var(--btn-secondary-color);
+}
+.btn.btn-default.icon-btn,
 .btn.btn-default.ellipsis,
 .btn-default,
 .btn-default:active {
@@ -266,6 +273,7 @@ button.navbar-toggler {
 }
 
 /* Secondary button hover effects - fallback to secondary when not set in theme */
+.btn.btn-default.icon-btn:hover,
 .btn.btn-default.ellipsis:hover,
 .btn-default:hover {
     background-color: var(--btn-secondary-hover-bg, var(--btn-secondary-bg, #f3f3f3));
@@ -308,6 +316,14 @@ body {
     color: var(--sidebar-text-color,#525252) !important;
 }
 
+/* Sidebar structural sections - ensure all sidebar areas use theme colors */
+.body-sidebar .standard-items-sections,
+.body-sidebar .body-sidebar-cards,
+.body-sidebar .body-sidebar-bottom {
+    background-color: var(--sidebar-bg,#f8f8f8) !important;
+    color: var(--sidebar-text-color,#525252) !important;
+}
+
 /* Sidebar items - all text elements in sidebar navigation */
 .standard-sidebar-item,
 .item-anchor,
@@ -318,9 +334,38 @@ body {
     color: var(--sidebar-text-color,#525252) !important;
 }
 
+/* Sidebar header - use sidebar background and text colors */
+.sidebar-header {
+    background-color: var(--sidebar-bg,#f8f8f8) !important;
+    color: var(--sidebar-text-color,#525252) !important;
+}
+
+.sidebar-header .sidebar-item-label,
+.sidebar-header .header-title,
+.sidebar-header .header-subtitle {
+    color: var(--sidebar-text-color,#525252) !important;
+}
+
 /* Sidebar item hover state - background and text color on hover */
 .standard-sidebar-item:hover {
     background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Sidebar header hover + active state - match sidebar items */
+.sidebar-header:hover,
+.sidebar-header.active-sidebar,
+.sidebar-header.active-sidebar:hover {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+.sidebar-header:hover .sidebar-item-label,
+.sidebar-header:hover .header-title,
+.sidebar-header:hover .header-subtitle,
+.sidebar-header.active-sidebar .sidebar-item-label,
+.sidebar-header.active-sidebar .header-title,
+.sidebar-header.active-sidebar .header-subtitle {
     color: var(--sidebar-hover-text-color, #212529) !important;
 }
 
@@ -367,6 +412,78 @@ body {
 /* Collapse sidebar link */
 .collapse-sidebar-link {
     color: var(--sidebar-text-color, #525252) !important;
+}
+
+/* Collapse sidebar and bottom actions hover - use sidebar hover colors */
+.body-sidebar .collapse-sidebar-link:hover,
+.body-sidebar .onboarding-sidebar:hover,
+.body-sidebar .promotional-banner:hover,
+.body-sidebar .dropdown-navbar-user:hover,
+.body-sidebar .dropdown-navbar-user .nav-link:hover,
+.body-sidebar .dropdown-navbar-user:hover .nav-link {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* User block (avatar + name) in sidebar - use sidebar text color */
+.body-sidebar .dropdown-navbar-user,
+.body-sidebar .dropdown-navbar-user .nav-link,
+.body-sidebar .dropdown-navbar-user span {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.body-sidebar .dropdown-navbar-user svg,
+.body-sidebar .dropdown-navbar-user svg use {
+    fill: var(--sidebar-text-color, #525252) !important;
+    stroke: var(--sidebar-text-color, #525252) !important;
+}
+
+/* User menu dropdown (inside sidebar) - background and hover colors */
+.body-sidebar .dropdown-menu {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.body-sidebar .dropdown-menu .dropdown-item {
+    background-color: transparent !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.body-sidebar .dropdown-menu .dropdown-item:hover,
+.body-sidebar .dropdown-menu .dropdown-item:focus {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* App/toolbar context menu (frappe-menu) - match sidebar theme */
+.frappe-menu.context-menu {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.frappe-menu.context-menu .dropdown-menu-item a,
+.frappe-menu.context-menu .menu-item-title {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.frappe-menu.context-menu .menu-item-icon svg,
+.frappe-menu.context-menu .menu-item-icon svg use {
+    fill: var(--sidebar-text-color, #525252) !important;
+    stroke: var(--sidebar-text-color, #525252) !important;
+}
+
+.frappe-menu.context-menu .dropdown-menu-item:hover,
+.frappe-menu.context-menu .dropdown-menu-item:focus {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+.frappe-menu.context-menu .dropdown-menu-item:hover .menu-item-title,
+.frappe-menu.context-menu .dropdown-menu-item:hover .menu-item-icon svg,
+.frappe-menu.context-menu .dropdown-menu-item:hover .menu-item-icon svg use {
+    color: var(--sidebar-hover-text-color, #212529) !important;
+    fill: var(--sidebar-hover-text-color, #212529) !important;
+    stroke: var(--sidebar-hover-text-color, #212529) !important;
 }
 
 /* Collapse sidebar link SVG icons */
@@ -462,17 +579,6 @@ div.level-right {
 .d-sm-block {
     display: var(--hide-help, block) !important;
 }
-
-/* App switcher - navigation dropdown that can be hidden based on theme settings */
-.sidebar-item-control{
-    display: var(--hide-app-switcher, block) !important;
-}
-
-/* App switcher anchor - disable clicking when app switcher is hidden */
-.app-switcher-dropdown {
-    pointer-events: var(--app-switcher-pointer-events, auto) !important;
-}
-
 
 /* ========================================
    WIDGET/CARD STYLING
