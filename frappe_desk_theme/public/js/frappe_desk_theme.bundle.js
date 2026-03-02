@@ -335,8 +335,6 @@ class FrappeDeskTheme {
 			"--breadcrumb-disabled-color",
 			"--help-nav-link-color",
 			"--help-nav-link-stroke",
-			"--hide-app-switcher",
-			"--app-switcher-pointer-events",
 			"--footer-bg",
 			"--footer-color",
 			"--footer-border",
@@ -375,8 +373,6 @@ class FrappeDeskTheme {
 		// UI element visibility defaults
 		root.style.setProperty("--hide-help", "block");
 		root.style.setProperty("--hide-like-comment", "block");
-		root.style.setProperty("--hide-app-switcher", "block");
-		root.style.setProperty("--app-switcher-pointer-events", "auto");
 		root.style.setProperty("--sidebar-expanded", "");
 		root.style.setProperty("--sidebar-hover-bg", "#e9ecef");
 		root.style.setProperty("--sidebar-hover-text-color", "#212529");
@@ -539,16 +535,6 @@ class FrappeDeskTheme {
 		if (theme.hide_help_button !== undefined) {
 			root.style.setProperty("--hide-help", theme.hide_help_button ? "none" : "block");
 		}
-		if (theme.hide_app_switcher !== undefined) {
-			root.style.setProperty(
-				"--hide-app-switcher",
-				theme.hide_app_switcher ? "none" : "block"
-			);
-			root.style.setProperty(
-				"--app-switcher-pointer-events",
-				theme.hide_app_switcher ? "none" : "auto"
-			);
-		}
 
 		// Primary button styling (hover fallbacks to normal when not set)
 		if (theme.button_background_color) {
@@ -680,7 +666,7 @@ class FrappeDeskTheme {
 		this.setCSSVariables();
 		this.toggleSidebar();
 		this.toggleSearchBar();
-		this.setDefaultApp();
+		this.hideStandardMenu();
 		this.applyFixedSidebarBehavior();
 		this.performInitialSidebarLoginRedirect();
 		if (
@@ -743,24 +729,20 @@ class FrappeDeskTheme {
 	}
 
 	/**
-	 * Set current app to default app when app switcher is hidden
-	 * Similar to breadcrumbs.js line 83 functionality
+	 * Hide the standard toolbar/context menu when configured
+	 * Uses the 'hide_standard_menu' flag from Desk Theme doctype
 	 */
-	setDefaultApp() {
-		// Only proceed if hide_app_switcher is enabled and default_app is set
-		if (!this.themeData.hide_app_switcher || !this.themeData.default_app) {
+	hideStandardMenu() {
+		// Only act when explicitly enabled in theme configuration
+		if (!this.themeData || !this.themeData.hide_standard_menu) {
 			return;
 		}
 
-		// Check if frappe.app.sidebar.apps_switcher exists (similar to breadcrumbs.js)
-		if (frappe?.app?.sidebar?.apps_switcher?.set_current_app) {
-			try {
-				// Set the current app to the default app (same as breadcrumbs.js line 83)
-				frappe.app.sidebar.apps_switcher.set_current_app(this.themeData.default_app);
-			} catch (error) {
-				// Silent fail if app switcher is not available or app doesn't exist
-			}
-		}
+		// Hide all Frappe context menus that use the standard menu class
+		const menus = document.querySelectorAll(".frappe-menu.context-menu");
+		menus.forEach((menu) => {
+			menu.style.display = "none";
+		});
 	}
 
 	/**
@@ -1113,6 +1095,7 @@ class FrappeDeskTheme {
 		let footerTimeout;
 		const observer = new MutationObserver(() => {
 			this.toggleSearchBar();
+			this.hideStandardMenu();
 			this.applyFixedSidebarBehavior();
 			this.performInitialSidebarLoginRedirect();
 
