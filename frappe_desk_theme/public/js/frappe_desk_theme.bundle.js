@@ -16,6 +16,8 @@ class FrappeDeskTheme {
 		this.footerHtmlCache = null;
 		this.footerCacheKey = null; // Track what theme data the footer was cached for
 		this.stickyFooterListenerSetup = false;
+		// Internal flag to ensure we only perform one redirect from sidebar after login
+		this.didInitialSidebarLoginRedirect = false;
 		this.init();
 	}
 
@@ -525,6 +527,15 @@ class FrappeDeskTheme {
 		if (theme.navbar_text_color) {
 			root.style.setProperty("--navbar-color", theme.navbar_text_color);
 		}
+		if (theme.navbar_toggler_border_color) {
+			root.style.setProperty("--navbar-toggler-border", theme.navbar_toggler_border_color);
+		}
+		if (theme.navbar_breadcrumb_disabled_color) {
+			root.style.setProperty(
+				"--breadcrumb-disabled-color",
+				theme.navbar_breadcrumb_disabled_color
+			);
+		}
 		if (theme.hide_help_button !== undefined) {
 			root.style.setProperty("--hide-help", theme.hide_help_button ? "none" : "block");
 		}
@@ -539,7 +550,7 @@ class FrappeDeskTheme {
 			);
 		}
 
-		// Primary button styling
+		// Primary button styling (hover fallbacks to normal when not set)
 		if (theme.button_background_color) {
 			root.style.setProperty("--btn-primary-bg", theme.button_background_color);
 		}
@@ -548,9 +559,13 @@ class FrappeDeskTheme {
 		}
 		if (theme.button_hover_background_color) {
 			root.style.setProperty("--btn-primary-hover-bg", theme.button_hover_background_color);
+		} else if (theme.button_background_color) {
+			root.style.setProperty("--btn-primary-hover-bg", theme.button_background_color);
 		}
 		if (theme.button_hover_text_color) {
 			root.style.setProperty("--btn-primary-hover-color", theme.button_hover_text_color);
+		} else if (theme.button_text_color) {
+			root.style.setProperty("--btn-primary-hover-color", theme.button_text_color);
 		}
 
 		// Secondary button styling
@@ -565,11 +580,21 @@ class FrappeDeskTheme {
 				"--btn-secondary-hover-bg",
 				theme.secondary_button_hover_background_color
 			);
+		} else if (theme.secondary_button_background_color) {
+			root.style.setProperty(
+				"--btn-secondary-hover-bg",
+				theme.secondary_button_background_color
+			);
 		}
 		if (theme.secondary_button_hover_text_color) {
 			root.style.setProperty(
 				"--btn-secondary-hover-color",
 				theme.secondary_button_hover_text_color
+			);
+		} else if (theme.secondary_button_text_color) {
+			root.style.setProperty(
+				"--btn-secondary-hover-color",
+				theme.secondary_button_text_color
 			);
 		}
 
@@ -656,6 +681,8 @@ class FrappeDeskTheme {
 		this.toggleSidebar();
 		this.toggleSearchBar();
 		this.setDefaultApp();
+		this.applyFixedSidebarBehavior();
+		this.performInitialSidebarLoginRedirect();
 		if (
 			this.themeData.carousel &&
 			this.themeData.carousel.images &&
@@ -733,6 +760,161 @@ class FrappeDeskTheme {
 			} catch (error) {
 				// Silent fail if app switcher is not available or app doesn't exist
 			}
+		}
+	}
+
+	/**
+	 * Force Desk to always use a single, fixed workspace sidebar
+	 * Uses the 'fixed_sidebar' link field from the Desk Theme doctype
+	 */
+	applyFixedSidebarBehavior() {
+		// Only applicable inside Desk (not on login page)
+		if (
+			document.body.classList.contains("login-page") ||
+			document.querySelector("#page-login")
+		) {
+			return;
+		}
+
+		if (!this.themeData || !this.themeData.fixed_sidebar) {
+			return;
+		}
+
+		if (typeof frappe === "undefined" || !frappe.app || !frappe.app.sidebar) {
+			return;
+		}
+
+		const sidebar = frappe.app.sidebar;
+
+		// Only patch once
+		if (sidebar.__fixed_sidebar_patched) {
+			return;
+		}
+		sidebar.__fixed_sidebar_patched = true;
+
+		const fixedSidebarLabel = this.themeData.fixed_sidebar;
+
+		// Override sidebar switching methods to always use the configured sidebar
+		sidebar.set_workspace_sidebar = function () {
+			this.setup(fixedSidebarLabel);
+			this.set_active_workspace_item();
+		};
+
+		sidebar.show_sidebar_for_module = function () {
+			// No-op: keep using the fixed sidebar
+			return;
+		};
+
+		sidebar.set_sidebar_for_page = function () {
+			this.setup(fixedSidebarLabel);
+		};
+
+		// Apply immediately for current page if possible
+		try {
+			sidebar.setup(fixedSidebarLabel);
+			sidebar.set_active_workspace_item();
+		} catch (e) {
+			// Silent fail – sidebar might not be fully initialised yet
+		}
+	}
+
+	/**
+	 * On first Desk load after login, redirect user directly to a page
+	 * derived from the fixed sidebar (first link item), instead of the
+	 * default desktop / workspace landing.
+	 */
+	performInitialSidebarLoginRedirect() {
+		// Only run once per browser tab (use sessionStorage so it persists across reloads)
+		const redirectFlagKey = "frappe_desk_theme_sidebar_redirect_done";
+		try {
+			if (sessionStorage.getItem(redirectFlagKey) === "1") {
+				return;
+			}
+		} catch (e) {
+			// If sessionStorage is unavailable, fall back to in-memory flag
+			if (this.didInitialSidebarLoginRedirect) {
+				return;
+			}
+		}
+
+		// Must be enabled in theme and have a fixed sidebar configured
+		if (
+			!this.themeData ||
+			!this.themeData.redirect_to_sidebar_on_login ||
+			!this.themeData.fixed_sidebar
+		) {
+			return;
+		}
+
+		// Not applicable on the login page
+		if (
+			document.body.classList.contains("login-page") ||
+			document.querySelector("#page-login")
+		) {
+			return;
+		}
+
+		// Only act inside Desk
+		if (!window.location.pathname.startsWith("/desk")) {
+			return;
+		}
+
+		if (typeof frappe === "undefined" || !frappe.get_route || !frappe.boot) {
+			return;
+		}
+
+		const route = frappe.get_route() || [];
+
+		// Heuristic: only redirect from generic initial desk routes
+		// We *don't* treat specific workspace routes as initial, so reloads
+		// on "Workspaces / <Something>" won't be redirected.
+		const isInitialDeskRoute = route.length === 0 || route[0] === "desktop";
+
+		if (!isInitialDeskRoute) {
+			return;
+		}
+
+		const fixedSidebarLabel = this.themeData.fixed_sidebar;
+		const sidebarBoot = frappe.boot.workspace_sidebar_item || {};
+		const sidebarKey = (fixedSidebarLabel || "").toLowerCase();
+		const sidebarData = sidebarBoot[sidebarKey];
+
+		if (!sidebarData || !Array.isArray(sidebarData.items) || !sidebarData.items.length) {
+			return;
+		}
+
+		// Choose first link-type item from the configured sidebar
+		const firstLink = sidebarData.items.find((item) => item.type === "Link" && item.link_to);
+		if (!firstLink) {
+			return;
+		}
+
+		this.didInitialSidebarLoginRedirect = true;
+		try {
+			sessionStorage.setItem(redirectFlagKey, "1");
+		} catch (e) {
+			// Ignore storage errors
+		}
+
+		try {
+			const linkType = (firstLink.link_type || "").toLowerCase();
+
+			if (linkType === "workspace") {
+				// Open workspace from sidebar link
+				frappe.set_route("Workspaces", firstLink.link_to);
+			} else if (linkType === "doctype") {
+				// Go to list view for the DocType
+				frappe.set_route("List", firstLink.link_to);
+			} else if (linkType === "page") {
+				// Use desk/page-name instead of desk/Page/page-name
+				frappe.set_route(firstLink.link_to);
+			} else if (linkType === "report") {
+				frappe.set_route("query-report", firstLink.link_to);
+			} else if (linkType === "url") {
+				window.location.href = firstLink.link_to;
+			}
+		} catch (e) {
+			// Silent fail – don't break desk if redirect fails
 		}
 	}
 
@@ -931,6 +1113,8 @@ class FrappeDeskTheme {
 		let footerTimeout;
 		const observer = new MutationObserver(() => {
 			this.toggleSearchBar();
+			this.applyFixedSidebarBehavior();
+			this.performInitialSidebarLoginRedirect();
 
 			// Debounce footer creation to avoid performance issues
 			clearTimeout(footerTimeout);
@@ -1071,8 +1255,43 @@ if (document.readyState === "loading") {
 	// DOM is still loading, wait for DOMContentLoaded event
 	document.addEventListener("DOMContentLoaded", () => {
 		window.frappeDeskTheme = new FrappeDeskTheme();
+		// Hook into Frappe's reload / clear cache button to also refresh theme
+		attachFrappeReloadThemeHook();
 	});
 } else {
 	// DOM is already loaded, initialize immediately
 	window.frappeDeskTheme = new FrappeDeskTheme();
+	attachFrappeReloadThemeHook();
+}
+
+/**
+ * Attach a hook so that when the user clicks Frappe's
+ * "Reload / Clear Cache" button, the desk theme cache
+ * is cleared and refreshed as well.
+ */
+function attachFrappeReloadThemeHook() {
+	if (typeof frappe === "undefined") return;
+	if (!frappe.ui || !frappe.ui.toolbar || !frappe.ui.toolbar.clear_cache) return;
+
+	// Avoid double-wrapping
+	if (frappe.ui.toolbar.__theme_reload_hooked) {
+		return;
+	}
+	frappe.ui.toolbar.__theme_reload_hooked = true;
+
+	const originalClearCache = frappe.ui.toolbar.clear_cache;
+
+	frappe.ui.toolbar.clear_cache = function () {
+		try {
+			if (window.frappeDeskTheme) {
+				// Clear local theme cache and force a fresh fetch
+				window.frappeDeskTheme.clearCache();
+				window.frappeDeskTheme.refreshTheme();
+			}
+		} catch (e) {
+			// Ignore theme errors; still allow core clear_cache to run
+		}
+
+		return originalClearCache.apply(this, arguments);
+	};
 }
