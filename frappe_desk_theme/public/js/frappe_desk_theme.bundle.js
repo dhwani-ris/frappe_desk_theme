@@ -3,7 +3,7 @@
  * Handles loading, applying, and managing custom theme configurations for Frappe Desk
  * Supports dynamic theme changes, user role-based hiding, and real-time DOM updates
  */
-	class FrappeDeskTheme {
+class FrappeDeskTheme {
 	constructor() {
 		// Store theme configuration data from server
 		this.themeData = null;
@@ -769,7 +769,10 @@
 	 */
 	applyFixedSidebarBehavior() {
 		// Only applicable inside Desk (not on login page)
-		if (document.body.classList.contains("login-page") || document.querySelector("#page-login")) {
+		if (
+			document.body.classList.contains("login-page") ||
+			document.querySelector("#page-login")
+		) {
 			return;
 		}
 
@@ -844,7 +847,10 @@
 		}
 
 		// Not applicable on the login page
-		if (document.body.classList.contains("login-page") || document.querySelector("#page-login")) {
+		if (
+			document.body.classList.contains("login-page") ||
+			document.querySelector("#page-login")
+		) {
 			return;
 		}
 
