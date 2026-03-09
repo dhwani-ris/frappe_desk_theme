@@ -409,6 +409,12 @@ body {
     stroke: var(--sidebar-hover-text-color, #212529) !important;
 }
 
+/* Section break labels (sidebar group headers) - custom color and bold */
+.body-sidebar .section-break .sidebar-item-label {
+    color: var(--sidebar-section-break-color, var(--sidebar-text-color, #525252)) !important;
+    font-weight: var(--sidebar-section-break-font-weight, normal) !important;
+}
+
 /* Collapse sidebar link */
 .collapse-sidebar-link {
     color: var(--sidebar-text-color, #525252) !important;

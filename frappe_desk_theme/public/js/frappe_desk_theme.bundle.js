@@ -608,6 +608,17 @@ class FrappeDeskTheme {
 		if (theme.sidebar_hover_text_color) {
 			root.style.setProperty("--sidebar-hover-text-color", theme.sidebar_hover_text_color);
 		}
+		if (theme.sidebar_section_break_text_color) {
+			root.style.setProperty(
+				"--sidebar-section-break-color",
+				theme.sidebar_section_break_text_color
+			);
+		}
+		if (theme.sidebar_section_break_bold) {
+			root.style.setProperty("--sidebar-section-break-font-weight", "700");
+		} else {
+			root.style.setProperty("--sidebar-section-break-font-weight", "normal");
+		}
 
 		// Data table styling
 		if (theme.table_head_background_color) {

@@ -60,6 +60,8 @@
   "column_break_wdml",
   "sidebar_text_color",
   "sidebar_hover_text_color",
+  "sidebar_section_break_text_color",
+  "sidebar_section_break_bold",
   "table_tab",
   "list_table_section",
   "table_head_background_color",
@@ -502,6 +504,19 @@
    "fieldname": "sidebar_hover_text_color",
    "fieldtype": "Color",
    "label": "Hover Text Color"
+  },
+  {
+   "description": "Color for sidebar section headers (e.g. Modules, Tools). Leave blank to use default sidebar text color.",
+   "fieldname": "sidebar_section_break_text_color",
+   "fieldtype": "Color",
+   "label": "Section Break Text Color"
+  },
+  {
+   "default": "0",
+   "description": "Make section break labels bold.",
+   "fieldname": "sidebar_section_break_bold",
+   "fieldtype": "Check",
+   "label": "Section Break Bold"
   },
   {
    "fieldname": "desk_behavior_tab",
