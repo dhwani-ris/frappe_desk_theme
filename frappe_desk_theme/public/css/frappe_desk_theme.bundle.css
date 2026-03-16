@@ -316,12 +316,18 @@ body {
     color: var(--sidebar-text-color,#525252) !important;
 }
 
+.body-sidebar .body-sidebar-top{
+    scrollbar-width: none;
+}
+
 /* Sidebar structural sections - ensure all sidebar areas use theme colors */
 .body-sidebar .standard-items-sections,
 .body-sidebar .body-sidebar-cards,
 .body-sidebar .body-sidebar-bottom {
     background-color: var(--sidebar-bg,#f8f8f8) !important;
     color: var(--sidebar-text-color,#525252) !important;
+    scrollbar-width: none;
+
 }
 
 /* Sidebar items - all text elements in sidebar navigation */
