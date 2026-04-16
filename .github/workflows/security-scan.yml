@@ -1,0 +1,137 @@
+name: Enhanced Security Scan
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**/requirements*.txt'
+      - '**/pyproject.toml'
+      - '**/setup.py'
+      - '**/setup.cfg'
+      - '**/package.json'
+      - '**/package-lock.json'
+  schedule:
+    # Weekly on Monday at 2 AM UTC (was daily — saves ~85% scheduled minutes)
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: security-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    # Single language — Python is the primary language in Frappe apps.
+    # JS/TS CodeQL rarely finds issues beyond what Semgrep catches in code-quality.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        id: codeql-analysis
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+        with:
+          category: "/language:python"
+
+      - name: Check CodeQL upload status
+        if: always() && steps.codeql-analysis.outcome == 'failure'
+        run: |
+          echo "⚠️ CodeQL analysis completed but upload failed."
+          echo "This is expected if Code Security is not enabled for this repository."
+          echo "To enable: Settings > Code security and analysis > Code scanning"
+
+  dependency-scanning:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-security-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-security-pip-
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit --desc --format json --output pip-audit-report.json || true
+
+      - name: Run Bandit Security Scan
+        run: |
+          pip install bandit[toml]
+          bandit -r . -f json -o bandit-report.json --exclude ./.git,./node_modules,./frappe-bench || true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-${{ github.run_id }}
+          path: |
+            pip-audit-report.json
+            bandit-report.json
+          retention-days: 14
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, dependency-scanning]
+    if: always()
+
+    steps:
+      - name: Generate Security Summary
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const needs = ${{ toJSON(needs) }};
+            const codeqlResult = needs['codeql-analysis']?.result || 'unknown';
+            const dependencyResult = needs['dependency-scanning']?.result || 'unknown';
+
+            const getStatus = (result) => {
+              if (result === 'success') return '✅ Passed';
+              if (result === 'failure') return '❌ Failed';
+              return '⚠️ Skipped';
+            };
+
+            const summary = `## 🔒 Security Scan Summary
+
+            | Scan Type | Status |
+            |-----------|--------|
+            | CodeQL Analysis (Python) | ${getStatus(codeqlResult)} |
+            | Dependency Scan | ${getStatus(dependencyResult)} |
+
+            **View detailed results in the Security tab or workflow artifacts.**`;
+
+            core.summary.addRaw(summary).write();

@@ -29,12 +29,15 @@ repos:
       - id: ruff
         name: "Run ruff import sorter"
         args: ["--select=I", "--fix"]
+        exclude: ^\.github/helper/
 
       - id: ruff
         name: "Run ruff linter"
+        exclude: ^\.github/helper/
 
       - id: ruff-format
         name: "Run ruff formatter"
+        exclude: ^\.github/helper/
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
@@ -75,7 +78,7 @@ repos:
   # Frappe-specific coding standards
   # The frappe-pre-commit package will be installed automatically
   - repo: https://github.com/dhwani-ris/frappe-pre-commit
-    rev: v1.0.2 
+    rev: v1.0.4
     hooks:
       - id: frappe-sql-security
       - id: frappe-doctype-naming

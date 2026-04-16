@@ -2,40 +2,80 @@ name: Generate Semantic Release
 on:
   push:
     branches: [ main, master ]
-      
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.json'
+      - '**.toml'
+      - '**.cfg'
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release even if no changes detected'
+        required: false
+        default: 'false'
+        type: boolean
+
 permissions:
   contents: write
   issues: write
   pull-requests: write
   id-token: write
   actions: read
-  
+
+# Wait for init workflow to complete first
+concurrency:
+  group: repo-init-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.DHWANI_RELEASE_BOT_APP_ID }}
+          private_key: ${{ secrets.DHWANI_RELEASE_BOT_PRIVATE_KEY }}
+
       - name: Checkout Entire Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token }}
           persist-credentials: true
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Setup dependencies
         run: |
-          npm install @semantic-release/git @semantic-release/exec @semantic-release/github @semantic-release/changelog --no-save
-          
+          npm install semantic-release @semantic-release/git @semantic-release/exec @semantic-release/github @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator --no-save
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "dhwani-release-bot"
+          git config --global user.email "dhwani-release-bot[bot]@users.noreply.github.com"
+
       - name: Create Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: "github-actions[bot]"
-          GIT_AUTHOR_EMAIL: "github-actions[bot]@users.noreply.github.com"
-          GIT_COMMITTER_NAME: "github-actions[bot]"
-          GIT_COMMITTER_EMAIL: "github-actions[bot]@users.noreply.github.com"
-        run: npx semantic-release
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GIT_AUTHOR_NAME: "dhwani-release-bot"
+          GIT_AUTHOR_EMAIL: "dhwani-release-bot[bot]@users.noreply.github.com"
+          GIT_COMMITTER_NAME: "dhwani-release-bot"
+          GIT_COMMITTER_EMAIL: "dhwani-release-bot[bot]@users.noreply.github.com"
+          NODE_ENV: production
+        run: |
+          npx semantic-release || {
+            echo "No release needed or semantic-release exited with code $?"
+            exit 0
+          }

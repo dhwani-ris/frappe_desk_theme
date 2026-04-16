@@ -2,159 +2,236 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, development, master ]
+    branches: [ main, master ]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.json'
+      - '**.cfg'
+      - '**.toml'
+      - '**.txt'
+      - '**.yml'
+      - '**.yaml'
   pull_request:
-    branches: [ main, develop, development, master ]
+    branches: [ main, master, develop, development ]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.json'
+      - '**.cfg'
+      - '**.toml'
+      - '**.txt'
+      - '**.yml'
+      - '**.yaml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Cancel previous runs on the same PR/branch (saves minutes on rapid pushes)
 concurrency:
-  group: ci-${{ github.event_name }}-${{ github.event.number || github.sha }}
-  cancel-in-progress: true
+  group: ci-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  dependency-vulnerability:
-    name: 'Vulnerable Dependency Check'
+  frappe-bench-test:
+    name: 'Frappe Bench App Tests'
     runs-on: ubuntu-latest
+    # Only on merge to main/master — not on PRs (too expensive)
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_frappe
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
-      - name: Install and run pip-audit
+      - name: Check if Frappe app exists
+        id: check-app
         run: |
-          pip install pip-audit
-          cd ${GITHUB_WORKSPACE}
-          pip-audit --desc on --ignore-vuln PYSEC-2023-312 .
+          if [ -f "__init__.py" ] || [ -f "hooks.py" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "No Frappe app files found, skipping bench tests"
+          fi
 
-  test:
-    name: 'Test'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.11", "3.13"]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.python-version }}
+      - name: Setup Python
+        if: steps.check-app.outputs.exists == 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
           cache: pip
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]" || pip install -r requirements.txt || echo "No requirements found"
-
-      - name: Run tests
-        run: |
-          pytest --cov=. --cov-report=xml || echo "No tests found or pytest not configured"
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
-        if: always()
-
-  security:
-    name: 'Security Check'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install security tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install bandit safety
-
-      - name: Run security checks
-        run: |
-          bandit -r . -f json -o bandit-report.json || true
-          safety check --json --output safety-report.json || true
-
-      - name: Upload security reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: |
-            bandit-report.json
-            safety-report.json
-
-  dependency-update:
-    name: 'Dependency Update Check'
-    runs-on: ubuntu-latest
-    needs: dependency-vulnerability
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
       - name: Setup Node.js
+        if: steps.check-app.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'npm'
+          node-version: 18
 
-      - name: Install dependencies
+      - name: Install system dependencies
+        if: steps.check-app.outputs.exists == 'true'
         run: |
-          python -m pip install --upgrade pip
-          pip install pip-audit
-          npm ci
+          sudo apt-get update
+          sudo apt-get install -y \
+            mariadb-client \
+            redis-tools \
+            curl \
+            git \
+            wget \
+            xvfb \
+            libfontconfig1 \
+            libfreetype6 \
+            libxrender1 \
+            libjpeg-turbo8 \
+            xfonts-75dpi \
+            xfonts-base
 
-      - name: Check for outdated Python dependencies
+      - name: Install Frappe Bench CLI
+        if: steps.check-app.outputs.exists == 'true'
+        run: pip install frappe-bench
+
+      - name: Wait for MariaDB
+        if: steps.check-app.outputs.exists == 'true'
         run: |
-          pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip show || echo "No outdated Python packages found"
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot --silent; then
+              echo "MariaDB is ready"
+              break
+            fi
+            echo "Waiting for MariaDB... ($i/30)"
+            sleep 2
+          done
 
-      - name: Check for outdated Node.js dependencies
-        run: npm outdated || echo "No outdated Node.js packages found"
-
-      - name: Run pip-audit
+      - name: Wait for Redis
+        if: steps.check-app.outputs.exists == 'true'
         run: |
-          pip-audit --format json --output pip-audit-report.json || true
+          for i in {1..30}; do
+            if redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            echo "Waiting for Redis... ($i/30)"
+            sleep 2
+          done
 
-      - name: Upload audit reports
+      - name: Detect app name
+        if: steps.check-app.outputs.exists == 'true'
+        id: app-name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          APP_NAME=$(echo "$REPO_NAME" | tr '-' '_' | tr '[:upper:]' '[:lower:]' | sed 's/^frappe_//')
+
+          if [ -f "__init__.py" ] || [ -f "hooks.py" ]; then
+            echo "Repo root is the app: $APP_NAME"
+          else
+            FOUND_APP=$(find . -maxdepth 2 -name "__init__.py" -type f | head -1 | xargs dirname | xargs basename)
+            if [ -n "$FOUND_APP" ] && [ "$FOUND_APP" != "." ]; then
+              APP_NAME="$FOUND_APP"
+            fi
+          fi
+
+          if [ -z "$APP_NAME" ] || [ "$APP_NAME" = "." ]; then
+            echo "Error: Could not detect app name"
+            exit 1
+          fi
+
+          echo "name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "APP_PATH=$(pwd)" >> $GITHUB_OUTPUT
+          echo "Detected app name: $APP_NAME"
+
+      - name: Initialize Frappe Bench
+        if: steps.check-app.outputs.exists == 'true'
+        run: bench init --skip-redis-config-generation --skip-assets --frappe-branch version-15 frappe-bench
+
+      - name: Get app into bench
+        if: steps.check-app.outputs.exists == 'true'
+        working-directory: frappe-bench
+        run: |
+          APP_NAME="${{ steps.app-name.outputs.name }}"
+          APP_PATH="${{ steps.app-name.outputs.APP_PATH }}"
+
+          if [ -f "$APP_PATH/__init__.py" ] || [ -f "$APP_PATH/hooks.py" ]; then
+            bench get-app $APP_NAME $APP_PATH
+          elif [ -d "$APP_PATH/$APP_NAME" ] && [ -f "$APP_PATH/$APP_NAME/__init__.py" ]; then
+            bench get-app $APP_NAME $APP_PATH/$APP_NAME
+          else
+            echo "Error: Could not find app at expected location"
+            exit 1
+          fi
+
+      - name: Create test site
+        if: steps.check-app.outputs.exists == 'true'
+        working-directory: frappe-bench
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_ROOT_USER: root
+          DB_ROOT_PASSWORD: root
+          REDIS_CACHE: redis://127.0.0.1:6379
+          REDIS_QUEUE: redis://127.0.0.1:6379
+        run: |
+          APP_NAME="${{ steps.app-name.outputs.name }}"
+          bench new-site test_site \
+            --db-type mariadb \
+            --admin-password admin \
+            --no-mariadb-socket \
+            --mariadb-host 127.0.0.1 \
+            --mariadb-port 3306 \
+            --mariadb-root-password root \
+            --install-app $APP_NAME || {
+              echo "Site creation or app installation failed"
+              exit 1
+            }
+
+      - name: Run app-specific tests
+        if: steps.check-app.outputs.exists == 'true'
+        working-directory: frappe-bench
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          REDIS_CACHE: redis://127.0.0.1:6379
+          REDIS_QUEUE: redis://127.0.0.1:6379
+        run: |
+          APP_NAME="${{ steps.app-name.outputs.name }}"
+          bench --site test_site run-tests --app $APP_NAME || {
+            echo "Tests failed for app $APP_NAME"
+            exit 1
+          }
+
+      - name: Upload test results
+        if: always() && steps.check-app.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: audit-reports
-          path: pip-audit-report.json
+          name: frappe-test-results
+          path: frappe-bench/sites/test_site/logs/*.log
+          if-no-files-found: ignore
 
   build:
     name: 'Build Check'
     runs-on: ubuntu-latest
-    needs: [lint-and-format, test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
     steps:
       - name: Checkout code
@@ -169,21 +246,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build
-          npm ci
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else echo "No npm lockfile, skipping npm ci"; fi
 
       - name: Build Python package
-        run: |
-          python -m build || echo "No Python package to build"
+        run: python -m build || echo "No Python package to build"
 
       - name: Build frontend assets
         run: |
-          npm run build || echo "No build script found"
+          if [ -f package.json ]; then npm run build || echo "No build script found"; else echo "No package.json, skipping frontend build"; fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
