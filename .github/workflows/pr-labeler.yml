@@ -1,49 +1,35 @@
-# .github/workflows/pr-labeler.yml
-name: "PR Labeler"
+name: "PR Setup"
 
 on:
   pull_request:
-    types: [opened, reopened]
-    branches: [main, master] # Label PRs to these branches
+    types: [opened, reopened, ready_for_review]
+    branches: [main, master]
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  label:
+  pr-setup:
+    name: Label & Assign Reviewer
     runs-on: ubuntu-latest
-    # Only run for PRs targeting main or master branches
     if: contains(fromJson('["main", "master"]'), github.event.pull_request.base.ref)
     steps:
-      - name: Auto Label PR
+      - name: Auto Label and Request Review
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-            });
-
+            const pr = context.payload.pull_request;
             const title = pr.title.toLowerCase();
-            const targetBranch = pr.base.ref;
             const labels = [];
 
-            console.log(`Labeling PR #${pr.number} targeting ${targetBranch} branch`);
-
-            // Skip release note for maintenance tasks
+            // --- Label based on title ---
             const skipPrefixes = ['chore', 'ci', 'style', 'test', 'refactor'];
-            const hasSkipPrefix = skipPrefixes.some(prefix => 
-              title.startsWith(prefix + ':') || title.startsWith(prefix + '(')
-            );
-            
-            if (hasSkipPrefix) {
+            if (skipPrefixes.some(p => title.startsWith(p + ':') || title.startsWith(p + '('))) {
               labels.push('skip-release-notes');
             }
 
-            // Type detection from title
             if (title.includes('feat') || title.includes('feature')) {
               labels.push('feature');
             } else if (title.includes('fix') || title.includes('bug')) {
@@ -54,40 +40,28 @@ jobs:
               labels.push('refactor');
             }
 
-            // Add branch-specific labels
-            if (targetBranch === 'main' || targetBranch === 'master') {
-              labels.push('release');
-              console.log('🚀 Production release PR');
-            }
+            labels.push('release');
 
-            // Add labels with error handling
+            // Apply labels
             if (labels.length > 0) {
               try {
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.payload.pull_request.number,
+                  issue_number: pr.number,
                   labels: labels
                 });
-                
-                console.log(`✅ Added labels: ${labels.join(', ')}`);
+                console.log(`Added labels: ${labels.join(', ')}`);
               } catch (error) {
                 if (error.status === 422) {
-                  // Handle missing labels by creating them first
-                  console.log('Some labels don\'t exist, creating them...');
-                  
                   const labelConfigs = {
                     'skip-release-notes': { color: '6c757d', description: 'Skip in release notes' },
-                    'uat-release': { color: 'fd7e14', description: 'UAT release PR' },
-                    'released': { color: 'e83e8c', description: 'Production release PR' },
-                    'development': { color: '17a2b8', description: 'Development branch PR' },
                     'feature': { color: '0e8a16', description: 'New feature' },
                     'bug': { color: 'd73a4a', description: 'Bug fix' },
                     'docs': { color: '0052cc', description: 'Documentation' },
-                    'refactor': { color: 'fbca04', description: 'Code refactoring' }
+                    'refactor': { color: 'fbca04', description: 'Code refactoring' },
+                    'release': { color: 'e83e8c', description: 'Production release PR' }
                   };
-                  
-                  // Create missing labels
                   for (const label of labels) {
                     if (labelConfigs[label]) {
                       try {
@@ -98,27 +72,56 @@ jobs:
                           color: labelConfigs[label].color,
                           description: labelConfigs[label].description
                         });
-                        console.log(`🆕 Created label: ${label}`);
-                      } catch (createError) {
-                        console.log(`⚠️ Could not create label ${label}: ${createError.message}`);
-                      }
+                      } catch (e) { /* label may already exist */ }
                     }
                   }
-                  
-                  // Try adding labels again
-                  try {
-                    await github.rest.issues.addLabels({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      issue_number: context.payload.pull_request.number,
-                      labels: labels
-                    });
-                    console.log(`✅ Added labels after creation: ${labels.join(', ')}`);
-                  } catch (retryError) {
-                    console.log(`⚠️ Still couldn't add labels: ${retryError.message}`);
-                  }
-                } else {
-                  console.log(`⚠️ Error adding labels: ${error.message}`);
+                  // Retry
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pr.number,
+                    labels: labels
+                  }).catch(e => console.log(`Label retry failed: ${e.message}`));
                 }
               }
+            }
+
+            // --- Request review ---
+            if (pr.draft) {
+              console.log('PR is draft, skipping review request');
+              return;
+            }
+
+            const reviewer = 'dhwani-ankit';
+            try {
+              const { data: currentReviews } = await github.rest.pulls.listRequestedReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+              });
+
+              const alreadyRequested = currentReviews.users?.some(
+                u => u.login.toLowerCase() === reviewer.toLowerCase()
+              );
+
+              if (!alreadyRequested) {
+                await github.rest.pulls.requestReviewers({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  reviewers: [reviewer],
+                });
+                console.log(`Requested review from ${reviewer}`);
+              }
+            } catch (error) {
+              console.log(`Could not request review: ${error.message}`);
+              // Fallback: add as assignee
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  assignees: [reviewer],
+                });
+              } catch (e) { /* ignore */ }
             }

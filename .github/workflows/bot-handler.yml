@@ -2,9 +2,9 @@ name: Dhwani Release Bot Handler
 
 on:
   issue_comment:
-    types: [created, edited]
+    types: [created]
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened]
     branches: [ main, master ]
 
 permissions:

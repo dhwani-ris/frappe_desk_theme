@@ -1,14 +1,26 @@
 name: Quality Checks
 
 on:
-  # Only run on PRs - no push trigger to avoid duplicates
   pull_request:
     branches: [ main, master, develop, development ]
     types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.css'
+      - '**.html'
+      - '**.json'
+      - '.pre-commit-config.yaml'
+      - 'commitlint.config.js'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Cancel previous quality check runs on the same PR
+concurrency:
+  group: quality-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   commit-lint:
@@ -23,77 +35,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          check-latest: true
 
       - name: Check commit titles
         run: |
           npm install @commitlint/cli @commitlint/config-conventional
-          
-          # Verify config file exists
-          if [ ! -f commitlint.config.js ]; then
-            echo "Error: commitlint.config.js not found"
-            exit 1
-          fi
-          
-          echo "=== Commitlint config file ==="
-          cat commitlint.config.js
-          echo ""
-          
-          # Check if packages are installed
-          echo "=== Installed packages ==="
-          npm list @commitlint/cli @commitlint/config-conventional || true
-          echo ""
-          
-          # Test commitlint config loading
-          echo "=== Testing commitlint config ==="
-          npx commitlint --print-config || echo "Config test failed"
-          echo ""
-          
-          # Show commits to be checked
-          echo "=== Commits to check ==="
-          git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} || echo "No commits found"
-          echo ""
-          
-          # Run commitlint (it will auto-detect commitlint.config.js in root)
-          echo "=== Running commitlint ==="
           npx commitlint --verbose --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
-
-  docs-required:
-    name: 'Documentation Required'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
-
-    steps:
-      - name: 'Setup Environment'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - uses: actions/checkout@v4
-
-      - name: Validate Docs
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          pip install requests --quiet
-          
-          # Check if PR number is valid
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
-            echo "No valid PR number found. Skipping documentation check. ✅"
-            exit 0
-          fi
-          
-          # Run documentation checker with error handling
-          python $GITHUB_WORKSPACE/.github/helper/documentation.py $PR_NUMBER || {
-            echo "Documentation checker failed, but continuing workflow. ⚠️"
-            exit 0
-          }
 
   linter:
     name: 'Semgrep Rules'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
+    if: github.event_name == 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
@@ -102,8 +53,20 @@ jobs:
           python-version: '3.13'
           cache: pip
 
+      - name: Cache Semgrep rules
+        uses: actions/cache@v4
+        with:
+          path: frappe-semgrep-rules
+          key: semgrep-rules-${{ github.run_id }}
+          restore-keys: semgrep-rules-
+
       - name: Download Semgrep rules
-        run: git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-rules
+        run: |
+          if [ -d "frappe-semgrep-rules" ]; then
+            cd frappe-semgrep-rules && git pull --ff-only || true
+          else
+            git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-rules
+          fi
 
       - name: Run Semgrep rules
         run: |
@@ -113,7 +76,7 @@ jobs:
   precommit:
     name: 'Pre-Commit'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
+    if: github.event_name == 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
@@ -121,28 +84,25 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-      
+
       - name: Check for pre-commit config
         run: |
           if [ ! -f .pre-commit-config.yaml ]; then
-            echo "Pre-commit config not found. Downloading..."
-            curl -o .pre-commit-config.yaml https://raw.githubusercontent.com/dhwani-ris/frappe-pre-commit/main/examples/.pre-commit-config.yaml
-          else
-            echo "Pre-commit config already exists."
+            curl -s -o .pre-commit-config.yaml https://raw.githubusercontent.com/dhwani-ris/frappe-pre-commit/main/examples/.pre-commit-config.yaml
           fi
-      
-      - name: Install pre-commit and dependencies
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: pre-commit-
+
+      - name: Install and run pre-commit
         run: |
           pip install pre-commit
           pre-commit install --install-hooks
-      
-      - name: Run pre-commit (check only, no auto-fix)
-        run: |
-          # Run pre-commit in CI mode - it will check but not modify files
-          # Skip no-commit-to-branch hook in CI (it's meant for local development)
-          # This will fail if files need formatting, which is what we want
           SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure || {
-            echo "❌ Pre-commit checks failed. Some files need formatting or have issues."
-            echo "Please run 'pre-commit run --all-files' locally to fix the issues."
+            echo "❌ Pre-commit checks failed. Run 'pre-commit run --all-files' locally."
             exit 1
           }

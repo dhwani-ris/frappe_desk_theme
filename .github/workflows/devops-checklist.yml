@@ -1,0 +1,386 @@
+name: DevOps Checklist Reminder
+
+on:
+  pull_request:
+    # Only on open/reopen — not on synchronize (saves a full run per push to PR)
+    types: [opened, reopened]
+    branches: [ main, master ]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  checklist-reminder:
+    name: Add DevOps Checklist Reminder
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.base.ref == 'main' || 
+      github.event.pull_request.base.ref == 'master'
+    
+    steps:
+      - name: Check if deployment notes comment exists
+        id: check-deployment-notes
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+            });
+            
+            const botComment = comments.data.find(
+              comment => comment.user.type === 'Bot' && 
+              comment.body.includes('Production Deployment Release Document')
+            );
+            
+            return { exists: !!botComment, commentId: botComment?.id };
+      
+      - name: Generate Deployment Notes automatically (Comment 1)
+        if: steps.check-deployment-notes.outputs.exists != 'true' || github.event.action == 'opened'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Get all commits in the PR using GitHub API
+            let commits = [];
+            try {
+              const { data: prCommits } = await github.rest.pulls.listCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              
+              commits = prCommits.map(commit => ({
+                hash: commit.sha.substring(0, 7),
+                message: commit.commit.message.split('\n')[0],
+                author: commit.commit.author.name,
+                date: commit.commit.author.date.split('T')[0]
+              }));
+            } catch (e) {
+              console.log('Error getting commits:', e.message);
+            }
+            
+            // Determine release type from commits
+            let releaseType = 'Patch';
+            const hasBreaking = commits.some(c => 
+              c.message.includes('BREAKING') || 
+              c.message.includes('BREAKING CHANGE') ||
+              c.message.startsWith('feat!') ||
+              c.message.match(/^feat\(.+\)!:/)
+            );
+            const hasFeature = commits.some(c => 
+              c.message.startsWith('feat') && !c.message.startsWith('feat!')
+            );
+            const hasFix = commits.some(c => c.message.startsWith('fix'));
+            
+            if (hasBreaking) {
+              releaseType = 'Major';
+            } else if (hasFeature) {
+              releaseType = 'Minor';
+            } else if (hasFix) {
+              releaseType = 'Patch';
+            }
+            
+            // Get version from latest release or estimate from release type
+            let version = 'TBA';
+            try {
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 1
+              });
+              
+              if (releases.length > 0) {
+                const latestRelease = releases[0];
+                const versionMatch = latestRelease.tag_name.match(/v?(\d+\.\d+\.\d+)/);
+                if (versionMatch) {
+                  const [major, minor, patch] = versionMatch[1].split('.').map(Number);
+                  if (releaseType === 'Major') {
+                    version = `${major + 1}.0.0`;
+                  } else if (releaseType === 'Minor') {
+                    version = `${major}.${minor + 1}.0`;
+                  } else {
+                    version = `${major}.${minor}.${patch + 1}`;
+                  }
+                }
+              } else {
+                // No releases yet, start with 1.0.0
+                version = releaseType === 'Major' ? '1.0.0' : releaseType === 'Minor' ? '0.1.0' : '0.0.1';
+              }
+            } catch (e) {
+              console.log('Could not determine version:', e.message);
+            }
+            
+            // Get reviewers
+            let reviewers = [];
+            try {
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              const approvedReviewers = reviews
+                .filter(r => r.state === 'APPROVED')
+                .map(r => r.user.login)
+                .filter((v, i, a) => a.indexOf(v) === i); // unique
+              reviewers = approvedReviewers;
+            } catch (e) {
+              console.log('Could not get reviewers:', e.message);
+            }
+            
+            // Group commits by type for feature details
+            const features = commits.filter(c => c.message.startsWith('feat')).map(c => c.message.replace(/^feat(\(.+?\))?:\s*/i, ''));
+            const fixes = commits.filter(c => c.message.startsWith('fix')).map(c => c.message.replace(/^fix(\(.+?\))?:\s*/i, ''));
+            const other = commits.filter(c => !c.message.startsWith('feat') && !c.message.startsWith('fix') && !c.message.startsWith('chore') && !c.message.startsWith('ci'));
+            
+            // Build feature details
+            let featureDetails = [];
+            if (features.length > 0) {
+              featureDetails.push(...features.map(f => `1) ${f}`));
+            }
+            if (fixes.length > 0) {
+              featureDetails.push(...fixes.map(f => `2) ${f}`));
+            }
+            if (other.length > 0) {
+              featureDetails.push(...other.slice(0, 5).map((o, i) => `${i + 3}) ${o.message}`));
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            const releaseDate = today.split('-').reverse().join('-'); // Format: DD-MM-YYYY
+            
+            // Format feature details better
+            const formatFeatureDetails = (details) => {
+              if (details.length === 0) return 'See commits above';
+              return details.map((f, i) => `${i + 1}) ${f}`).join('<br>');
+            };
+            
+            const deploymentNotes = `## 📝 Production Deployment Release Document
+            
+            **Release Information:**
+            - **Version:** \`${version}\`
+            - **Release Date:** \`${releaseDate}\`
+            - **Prepared by:** \`${pr.user.login}\`
+            - **Approved by:** \`${reviewers.length > 0 ? reviewers.join(', ') : 'Pending'}\`
+            - **Release Type:** \`${releaseType}\`
+            
+            **Deployment Branches:**
+            \`\`\`
+            ${pr.base.ref}
+            \`\`\`
+            
+            **Overview:**
+            - Here are the key feature details for this release:
+            
+            **Repository Details:**
+            
+            | S.No. | Repository Name | Release Number | Feature Details |
+            |-------|-----------------|----------------|-----------------|
+            | 1. | \`${context.repo.repo}\` | \`${pr.base.ref}-release-${version}\` | ${formatFeatureDetails(featureDetails)} |
+            
+            **Dependencies:**
+            - Dependencies updated: \`TBD\` *(Please review and update)*
+            \`\`\`
+            <!-- Review and update dependency changes if any -->
+            \`\`\`
+            
+            **Database Changes (Queries to run):**
+            - Database changes required: \`TBD\` *(Please review and update)*
+            \`\`\`
+            <!-- Review and add SQL queries or migration scripts if applicable -->
+            \`\`\`
+            
+            **Testing:**
+            - [ ] Unit tests passed
+            - [ ] Integration tests passed
+            - [ ] E2E tests passed
+            - [ ] Manual testing completed
+            \`\`\`
+            <!-- Add testing notes and results -->
+            \`\`\`
+            
+            **Known Issues:**
+            - Known issues: \`TBD\` *(Please review and update)*
+            \`\`\`
+            <!-- List any known issues or N/A -->
+            \`\`\`
+            
+            **Contact Information:**
+            - Support Team Email: \`\`\`<!-- email -->\`\`\`
+            - Support Team Phone: \`\`\`<!-- phone -->\`\`\`
+            
+            **Attachments:**
+            - Deployment files attached/committed: \`TBD\` *(Please review and update)*
+            \`\`\`
+            <!-- List attached files or N/A -->
+            \`\`\`
+            
+            ---
+            
+            ### For DevOps Team Use Only
+            *(To be filled by the DevOps team after deploying the release)*
+            
+            **Deployment Details:**
+            - Date and time of deployment: \`\`\`<!-- e.g., 23rd Jan 2025 [8:00PM] -->\`\`\`
+            - Deployed by: \`\`\`<!-- DevOps team member name -->\`\`\`
+            - Deployment Status: \`\`\`<!-- Successful / Failed / In Progress -->\`\`\`
+            
+            **Deployment Instructions:**
+            - [ ] Pre-deployment tasks completed (backups, etc.)
+            - [ ] Production environment accessed securely
+            - [ ] Latest release pulled from version control
+            - [ ] Dependencies installed/updated
+            - [ ] Database migrations run (if applicable)
+            - [ ] Application services restarted
+            - [ ] Deployment monitored and verified
+            
+            **Rollback Plan:**
+            - [ ] Rollback procedure documented
+            - [ ] Previous version tag identified: \`\`\`<!-- tag -->\`\`\`
+            - [ ] Database rollback scripts prepared (if applicable)
+            - [ ] Rollback tested in staging environment
+            
+            **Post-Deployment Checklist:**
+            - [ ] Service availability and response times verified
+            - [ ] System resources monitored
+            - [ ] Critical user scenarios tested
+            - [ ] Data integrity confirmed
+            - [ ] Error logs reviewed
+            - [ ] Security scans completed
+            - [ ] Server and infrastructure health checked
+            - [ ] Backup and disaster recovery procedures validated
+            
+            **Notes:**
+            \`\`\`
+            <!-- Add any additional deployment notes -->
+            \`\`\`
+            
+            **Acknowledgment:**
+            - [ ] Deployment acknowledged and system ready for production use
+            
+            ---
+            **Note:** This deployment document was **automatically generated** from PR commits and information. Please review and update the TBD sections before merging.`;
+            
+            // Check if comment already exists
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+            });
+            
+            const existingComment = comments.data.find(
+              comment => comment.user.type === 'Bot' && 
+              comment.body.includes('Production Deployment Release Document')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: deploymentNotes
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: deploymentNotes
+              });
+            }
+      
+      - name: Check if checklist comment exists
+        id: check-comment
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+            });
+            
+            const botComment = comments.data.find(
+              comment => comment.user.type === 'Bot' && 
+              comment.body.includes('DevOps Checklist - Workflow Review')
+            );
+            
+            return { exists: !!botComment, commentId: botComment?.id };
+      
+      - name: Add or update DevOps checklist reminder (Comment 2)
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const checklist = `## 🔧 DevOps Checklist - Workflow Review
+            
+            **Please review all workflows and checks before merging:**
+            
+            ### Workflow Status Review
+            - [ ] All CI/CD workflows are passing
+            - [ ] Quality Checks workflow passed
+            - [ ] Security Scan workflow passed
+            - [ ] Code quality checks passed
+            - [ ] Test coverage meets requirements
+            
+            ### Review Status
+            - [ ] All required reviewers have approved
+            - [ ] Code review completed
+            - [ ] Security review completed (if applicable)
+            
+            ### Pre-Merge Verification
+            - [ ] Deployment Notes document reviewed (see Deployment Notes comment above)
+            - [ ] All commits reviewed
+            - [ ] Breaking changes identified (if any)
+            - [ ] Version number verified (if applicable)
+            
+            ### Final Checks
+            - [ ] No blocking issues or errors
+            - [ ] Ready for production deployment
+            - [ ] Rollback plan understood (if high-risk)
+            
+            ---
+            **Note:** This checklist is for DevOps team to verify all workflows and checks before merging.`;
+            
+            // Check if comment already exists
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+            });
+            
+            const existingComment = comments.data.find(
+              comment => comment.user.type === 'Bot' && 
+              comment.body.includes('DevOps Checklist - Workflow Review')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: checklist
+              });
+              console.log('Updated existing DevOps Checklist comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: checklist
+              });
+              console.log('Created new DevOps Checklist comment');
+            }
+

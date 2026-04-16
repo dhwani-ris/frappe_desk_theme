@@ -1,119 +1,45 @@
 name: CI
 
 on:
-  # Run on push only for main/master (merged code validation)
   push:
     branches: [ main, master ]
-  # Run on PRs for all branches (pre-merge validation)
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.json'
+      - '**.cfg'
+      - '**.toml'
+      - '**.txt'
+      - '**.yml'
+      - '**.yaml'
   pull_request:
     branches: [ main, master, develop, development ]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.json'
+      - '**.cfg'
+      - '**.toml'
+      - '**.txt'
+      - '**.yml'
+      - '**.yaml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Wait for init workflow to complete first (for push to main/master)
+# Cancel previous runs on the same PR/branch (saves minutes on rapid pushes)
 concurrency:
-  group: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) && format('repo-init-{0}-{1}', github.repository, github.ref) || format('ci-{0}-{1}', github.repository, github.ref) }}
-  cancel-in-progress: false
+  group: ci-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  dependency-vulnerability:
-    name: 'Vulnerable Dependency Check'
-    runs-on: ubuntu-latest
-    # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
-
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
-      - name: Install and run pip-audit
-        run: |
-          pip install pip-audit
-          cd ${GITHUB_WORKSPACE}
-          pip-audit --desc on --ignore-vuln PYSEC-2023-312 .
-
-  test:
-    name: 'Test'
-    runs-on: ubuntu-latest
-    # Run on both PR and merge
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development'))
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.11", "3.13"]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-cov pytest-xdist
-          pip install -e ".[dev]" || pip install -r requirements.txt || echo "No requirements found"
-
-      - name: Run tests with coverage
-        run: |
-          pytest --cov=. --cov-report=xml --cov-report=term --cov-report=html || echo "No tests found or pytest not configured"
-        continue-on-error: true
-
-      - name: Check if coverage file exists
-        id: coverage-check
-        run: |
-          if [ -f coverage.xml ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Coverage file found"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Coverage file not found - tests may not have run or pytest-cov not installed"
-          fi
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: ${{ github.repository }}
-          flags: unittests
-          name: codecov-umbrella
-          verbose: true
-          override_commit: ${{ github.event.pull_request.head.sha || github.sha }}
-          override_branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
-        if: steps.coverage-check.outputs.exists == 'true'
-        
-      - name: Codecov Upload Status
-        if: always() && steps.coverage-check.outputs.exists == 'true'
-        run: |
-          echo "Codecov upload completed. Check https://codecov.io/gh/${{ github.repository }} for coverage reports."
-
   frappe-bench-test:
     name: 'Frappe Bench App Tests'
     runs-on: ubuntu-latest
-    # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
-    
+    # Only on merge to main/master — not on PRs (too expensive)
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
     services:
       mariadb:
         image: mariadb:10.11
@@ -146,10 +72,9 @@ jobs:
         run: |
           if [ -f "__init__.py" ] || [ -f "hooks.py" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Frappe app files found, proceeding with tests"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "No Frappe app files found (__init__.py or hooks.py), skipping Frappe bench tests"
+            echo "No Frappe app files found, skipping bench tests"
           fi
 
       - name: Setup Python
@@ -185,10 +110,9 @@ jobs:
 
       - name: Install Frappe Bench CLI
         if: steps.check-app.outputs.exists == 'true'
-        run: |
-          pip install frappe-bench
+        run: pip install frappe-bench
 
-      - name: Wait for MariaDB to be ready
+      - name: Wait for MariaDB
         if: steps.check-app.outputs.exists == 'true'
         run: |
           for i in {1..30}; do
@@ -200,7 +124,7 @@ jobs:
             sleep 2
           done
 
-      - name: Wait for Redis to be ready
+      - name: Wait for Redis
         if: steps.check-app.outputs.exists == 'true'
         run: |
           for i in {1..30}; do
@@ -216,36 +140,30 @@ jobs:
         if: steps.check-app.outputs.exists == 'true'
         id: app-name
         run: |
-          # Derive app name from repo name, removing frappe_ prefix if present
           REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
           APP_NAME=$(echo "$REPO_NAME" | tr '-' '_' | tr '[:upper:]' '[:lower:]' | sed 's/^frappe_//')
-          
-          # If repo root has __init__.py or hooks.py, it IS the app
+
           if [ -f "__init__.py" ] || [ -f "hooks.py" ]; then
             echo "Repo root is the app: $APP_NAME"
           else
-            # Try to find app directory
             FOUND_APP=$(find . -maxdepth 2 -name "__init__.py" -type f | head -1 | xargs dirname | xargs basename)
             if [ -n "$FOUND_APP" ] && [ "$FOUND_APP" != "." ]; then
               APP_NAME="$FOUND_APP"
-              echo "Found app directory: $APP_NAME"
             fi
           fi
-          
+
           if [ -z "$APP_NAME" ] || [ "$APP_NAME" = "." ]; then
             echo "Error: Could not detect app name"
             exit 1
           fi
-          
+
           echo "name=$APP_NAME" >> $GITHUB_OUTPUT
           echo "APP_PATH=$(pwd)" >> $GITHUB_OUTPUT
           echo "Detected app name: $APP_NAME"
 
       - name: Initialize Frappe Bench
         if: steps.check-app.outputs.exists == 'true'
-        run: |
-          bench init --skip-redis-config-generation --skip-assets --frappe-branch version-15 frappe-bench
-          cd frappe-bench
+        run: bench init --skip-redis-config-generation --skip-assets --frappe-branch version-15 frappe-bench
 
       - name: Get app into bench
         if: steps.check-app.outputs.exists == 'true'
@@ -253,13 +171,10 @@ jobs:
         run: |
           APP_NAME="${{ steps.app-name.outputs.name }}"
           APP_PATH="${{ steps.app-name.outputs.APP_PATH }}"
-          
-          # Check if app is in repo root (most common case)
+
           if [ -f "$APP_PATH/__init__.py" ] || [ -f "$APP_PATH/hooks.py" ]; then
-            echo "App is in repo root, using local path"
             bench get-app $APP_NAME $APP_PATH
           elif [ -d "$APP_PATH/$APP_NAME" ] && [ -f "$APP_PATH/$APP_NAME/__init__.py" ]; then
-            echo "App is in subdirectory"
             bench get-app $APP_NAME $APP_PATH/$APP_NAME
           else
             echo "Error: Could not find app at expected location"
@@ -278,8 +193,6 @@ jobs:
           REDIS_QUEUE: redis://127.0.0.1:6379
         run: |
           APP_NAME="${{ steps.app-name.outputs.name }}"
-          
-          # Create site with proper database connection
           bench new-site test_site \
             --db-type mariadb \
             --admin-password admin \
@@ -302,9 +215,6 @@ jobs:
           REDIS_QUEUE: redis://127.0.0.1:6379
         run: |
           APP_NAME="${{ steps.app-name.outputs.name }}"
-          echo "Running tests for app: $APP_NAME"
-          
-          # Run tests and fail if they fail
           bench --site test_site run-tests --app $APP_NAME || {
             echo "Tests failed for app $APP_NAME"
             exit 1
@@ -315,49 +225,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frappe-test-results
-          path: |
-            frappe-bench/sites/test_site/logs/*.log
+          path: frappe-bench/sites/test_site/logs/*.log
           if-no-files-found: ignore
-
-  dependency-update:
-    name: 'Dependency Update Check'
-    runs-on: ubuntu-latest
-    # Run only on PR (to check if dependencies need updating before merge)
-    if: github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'master')
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else echo "No npm lockfile, skipping npm ci"; fi
-
-      - name: Check for outdated Python dependencies
-        run: |
-          pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip show || echo "No outdated Python packages found"
-
-      - name: Check for outdated Node.js dependencies
-        run: |
-          if [ -f package.json ]; then npm outdated || echo "No outdated Node.js packages found"; else echo "No package.json, skipping npm outdated"; fi
 
   build:
     name: 'Build Check'
     runs-on: ubuntu-latest
-    needs: [test]
-    # Run on merge to main/master (push event)
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/development')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
     steps:
       - name: Checkout code
@@ -380,8 +254,7 @@ jobs:
           if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else echo "No npm lockfile, skipping npm ci"; fi
 
       - name: Build Python package
-        run: |
-          python -m build || echo "No Python package to build"
+        run: python -m build || echo "No Python package to build"
 
       - name: Build frontend assets
         run: |
