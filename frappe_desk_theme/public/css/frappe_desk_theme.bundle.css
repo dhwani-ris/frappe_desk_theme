@@ -556,12 +556,12 @@ div.level-right {
 }
 
 /* Table rows - data rows with customizable background and text colors */
-.level.list-row,
+/* .level.list-row,
 .level-item.bold.ellipsis a,
 .filterable.ellipsis {
     background-color: var(--table-body-bg);
     color: var(--table-body-color);
-}
+} */
 
 /* ========================================
    CONDITIONAL ELEMENT VISIBILITY
