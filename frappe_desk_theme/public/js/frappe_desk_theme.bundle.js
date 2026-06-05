@@ -677,6 +677,7 @@ class FrappeDeskTheme {
 		this.setCSSVariables();
 		this.toggleSidebar();
 		this.toggleSearchBar();
+		this.toggleNotification();
 		this.hideStandardMenu();
 		this.applyFixedSidebarBehavior();
 		this.performInitialSidebarLoginRedirect();
@@ -725,18 +726,53 @@ class FrappeDeskTheme {
 	}
 
 	/**
-	 * Toggle search bar visibility based on user roles
-	 * Hides search bar if current user's role matches hide_search configuration
+	 * Toggle search bar visibility based on user roles.
+	 * Hides search bar if current user's role matches hide_search configuration,
+	 * otherwise restores its native display.
+	 *
+	 * Frappe v15 used `.input-group.search-bar.text-muted` in the top navbar.
+	 * Frappe v16 moved the search affordance into the sidebar rail as
+	 * `.body-sidebar .navbar-search-bar`. Both are queried so the setting
+	 * works on either version.
 	 */
 	toggleSearchBar() {
-		const searchBar = document.querySelector(".input-group.search-bar.text-muted");
-		if (!searchBar) {
+		const selectors = [
+			// v15 navbar search box
+			".input-group.search-bar.text-muted",
+			// v16 sidebar search rail
+			".body-sidebar .navbar-search-bar",
+		];
+		const shouldHide = this.getUserRoles();
+		selectors.forEach((sel) => {
+			document.querySelectorAll(sel).forEach((el) => {
+				// Restore via empty string so the element falls back to its
+				// stylesheet display value when the role no longer matches.
+				el.style.display = shouldHide ? "none" : "";
+			});
+		});
+	}
+
+	/**
+	 * Toggle the desk notification bell based on the hide_notification flag.
+	 * Acts on both the v15 navbar bell and the v16 sidebar bell so the same
+	 * theme setting works regardless of Frappe version.
+	 */
+	toggleNotification() {
+		if (!this.themeData) {
 			return;
 		}
-
-		if (this.getUserRoles()) {
-			searchBar.style.display = "none";
-		}
+		const selectors = [
+			// v16 sidebar notification
+			".body-sidebar .sidebar-notification",
+			// v15 navbar notification
+			".navbar-nav .dropdown-notifications",
+		];
+		const shouldHide = !!this.themeData.hide_notification;
+		selectors.forEach((sel) => {
+			document.querySelectorAll(sel).forEach((el) => {
+				el.style.display = shouldHide ? "none" : "";
+			});
+		});
 	}
 
 	/**
@@ -1106,6 +1142,7 @@ class FrappeDeskTheme {
 		let footerTimeout;
 		const observer = new MutationObserver(() => {
 			this.toggleSearchBar();
+			this.toggleNotification();
 			this.hideStandardMenu();
 			this.applyFixedSidebarBehavior();
 			this.performInitialSidebarLoginRedirect();
