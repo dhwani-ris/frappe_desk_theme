@@ -105,29 +105,35 @@ frappe.ui.Sidebar = class CustomSidebar extends frappe.ui.Sidebar {
 		}
 	}
 
-	// Which sidebar group holds the currently-open page. Source of truth is the current URL's entity
-	// slug (correct the instant you navigate, unlike the `.active-sidebar` marker set on a timeout).
-	// Match that slug to a sidebar link's href; fall back to the `.active-sidebar` marker.
+	// Which sidebar group holds the currently-open page. Resolved by iterating the group sections and
+	// returning the one that CONTAINS the active item — robust against multiple `.body-sidebar` trees
+	// on the page (walking up with `closest()` could land on a marker with no section-item ancestor).
+	// Preference: the section containing the `.active-sidebar` marker; else the section containing a
+	// link whose href matches the current URL slug.
 	active_section_from_url() {
+		const sections = document.querySelectorAll(
+			".body-sidebar .sidebar-item-container.section-item"
+		);
+		// 1) section that contains the active-sidebar marker
+		for (const sec of sections) {
+			if (sec.querySelector(".standard-sidebar-item.active-sidebar")) return sec;
+		}
+		// 2) section that contains a link matching the current URL's first path segment
 		const slug = (
 			window.location.pathname.replace(/^\/(app|desk)\/?/, "").split(/[/?#]/)[0] || ""
 		).toLowerCase();
-		if (slug) {
-			const anchors = document.querySelectorAll(".body-sidebar .item-anchor[href]");
-			for (const a of anchors) {
+		if (!slug) return null;
+		for (const sec of sections) {
+			for (const a of sec.querySelectorAll(".item-anchor[href]")) {
 				const href = (a.getAttribute("href") || "")
 					.replace(/^\/(app|desk)\/?/, "")
 					.split(/[/?#]/)[0]
 					.replace(/\/+$/, "")
 					.toLowerCase();
-				if (href && href === slug) {
-					const sec = a.closest(".sidebar-item-container.section-item");
-					if (sec) return sec;
-				}
+				if (href && href === slug) return sec;
 			}
 		}
-		const marked = document.querySelector(".body-sidebar .standard-sidebar-item.active-sidebar");
-		return marked ? marked.closest(".sidebar-item-container.section-item") : null;
+		return null;
 	}
 
 	// Collapse every group except the one holding the current page, so the active item stays visible.
