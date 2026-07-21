@@ -62,6 +62,7 @@
   "sidebar_hover_text_color",
   "sidebar_section_break_text_color",
   "sidebar_section_break_bold",
+  "collapse_sidebar_groups",
   "table_tab",
   "list_table_section",
   "table_head_background_color",
@@ -519,6 +520,13 @@
    "label": "Section Break Bold"
   },
   {
+   "default": "0",
+   "description": "Start every sidebar group collapsed except the group of the current page.",
+   "fieldname": "collapse_sidebar_groups",
+   "fieldtype": "Check",
+   "label": "Collapse Sidebar Groups"
+  },
+  {
    "fieldname": "desk_behavior_tab",
    "fieldtype": "Tab Break",
    "label": "Desk Behavior"
@@ -577,7 +585,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-02 17:01:54.837120",
+ "modified": "2026-07-21 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",
