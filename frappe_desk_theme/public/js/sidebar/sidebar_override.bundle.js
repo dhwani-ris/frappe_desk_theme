@@ -99,7 +99,9 @@ frappe.ui.Sidebar = class CustomSidebar extends frappe.ui.Sidebar {
 	// client as `frappe.desk_theme_settings` by frappe_desk_theme.bundle.js (applyTheme).
 	collapse_enabled() {
 		try {
-			return !!(frappe.desk_theme_settings && frappe.desk_theme_settings.collapse_sidebar_groups);
+			return !!(
+				frappe.desk_theme_settings && frappe.desk_theme_settings.collapse_sidebar_groups
+			);
 		} catch (e) {
 			return false;
 		}
@@ -200,7 +202,10 @@ frappe.ui.Sidebar = class CustomSidebar extends frappe.ui.Sidebar {
 		this.__collapseObserver = new MutationObserver((muts) => {
 			if (!this.collapse_enabled()) return;
 			for (const m of muts) {
-				if ([...m.addedNodes].some(touches_groups) || [...m.removedNodes].some(touches_groups)) {
+				if (
+					[...m.addedNodes].some(touches_groups) ||
+					[...m.removedNodes].some(touches_groups)
+				) {
 					if (scheduled) return;
 					scheduled = true;
 					requestAnimationFrame(() => {
