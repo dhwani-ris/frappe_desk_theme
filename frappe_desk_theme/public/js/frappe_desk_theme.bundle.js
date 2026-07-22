@@ -674,6 +674,15 @@ class FrappeDeskTheme {
 	 * Orchestrates the application of CSS variables and UI element toggles
 	 */
 	applyTheme() {
+		// Publish the resolved theme settings so sibling bundles (e.g. the sidebar override) can read
+		// flags like `collapse_sidebar_groups` without re-fetching. Runs on cached + fresh + refresh.
+		try {
+			if (typeof frappe !== "undefined") {
+				frappe.desk_theme_settings = this.themeData;
+			}
+		} catch (e) {
+			/* ignore */
+		}
 		this.setCSSVariables();
 		this.toggleSidebar();
 		this.toggleSearchBar();
