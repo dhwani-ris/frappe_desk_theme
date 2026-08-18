@@ -1,3 +1,5 @@
+from frappe import __version__ as frappe_version
+
 app_name = "frappe_desk_theme"
 app_title = "Frappe Desk Theme"
 app_publisher = "Dhwani RIS"
@@ -54,7 +56,17 @@ web_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
 # Svg Icons
 # ------------------
 # include app icons in desk
-app_include_icons = "/assets/frappe_desk_theme/icons.svg"
+#
+# The two generations disagree on what this path is relative to. v15's www/app.html fetches
+# `/assets/{{ path }}`, so its own hooks read "frappe/icons/timeless/icons.svg"; v16 fetches the
+# value verbatim and its hooks read "/assets/frappe/icons/lucide/icons.svg". Sending the v16 form
+# to v15 yields "/assets//assets/..." -> 404, and because the desk injects the *response text*
+# into #all-symbols, Frappe's HTML error page lands in the DOM — dragging the website stylesheets
+# in with it and breaking desk layout. Emit the form this version actually expects.
+_ICONS = "frappe_desk_theme/icons.svg"
+app_include_icons = (
+	f"/assets/{_ICONS}" if int(frappe_version.split(".")[0]) >= 16 else _ICONS
+)
 
 # Home Pages
 # ----------
