@@ -6,7 +6,7 @@
  * sidebar object — `frappe.views.Workspace` owns the markup and offers none of the named-sidebar
  * switching methods (`setup`, `set_workspace_sidebar`, ...) that v16 provides.
  */
-const IS_V15 = !!(
+const FDT_IS_V15 = !!(
 	typeof frappe !== "undefined" &&
 	frappe.views &&
 	frappe.views.Workspace &&
@@ -14,14 +14,14 @@ const IS_V15 = !!(
 );
 
 // Sidebar container, whichever generation is rendering it.
-const SIDEBAR_CONTAINER_SELECTOR = ".body-sidebar-container, .layout-side-section";
+const FDT_SIDEBAR_CONTAINER_SELECTOR = ".body-sidebar-container, .layout-side-section";
 
-function getSidebarContainer() {
-	return document.querySelector(SIDEBAR_CONTAINER_SELECTOR);
+function fdtGetSidebarContainer() {
+	return document.querySelector(FDT_SIDEBAR_CONTAINER_SELECTOR);
 }
 
 // Desk base path: /app on v15, /desk on v16.
-function isDeskPath() {
+function fdtIsDeskPath() {
 	return (
 		window.location.pathname.startsWith("/desk") || window.location.pathname.startsWith("/app")
 	);
@@ -750,7 +750,7 @@ class FrappeDeskTheme {
 	 * Adds/removes 'expanded' class to control sidebar state
 	 */
 	toggleSidebar() {
-		const sidebarContainer = getSidebarContainer();
+		const sidebarContainer = fdtGetSidebarContainer();
 		if (!sidebarContainer) {
 			return;
 		}
@@ -815,7 +815,7 @@ class FrappeDeskTheme {
 		// methods on `frappe.app.sidebar`; v15 has neither that object nor those methods
 		// (`setup`, `set_workspace_sidebar`, `show_sidebar_for_module`, `set_sidebar_for_page`),
 		// because it renders exactly one workspace sidebar. Nothing to pin, so this is a no-op.
-		if (IS_V15) {
+		if (FDT_IS_V15) {
 			if (!this.__warnedFixedSidebarUnsupported) {
 				this.__warnedFixedSidebarUnsupported = true;
 				console.warn(
@@ -900,14 +900,14 @@ class FrappeDeskTheme {
 		}
 
 		// Only act inside Desk
-		if (!isDeskPath()) {
+		if (!fdtIsDeskPath()) {
 			return;
 		}
 
 		// v16 only. The target page is resolved from `frappe.boot.workspace_sidebar_item`, a boot
 		// key v15 does not populate (its nearest equivalent, `allowed_workspaces`, carries no
 		// per-sidebar item list to pick a first link from).
-		if (IS_V15) {
+		if (FDT_IS_V15) {
 			if (!this.__warnedLoginRedirectUnsupported) {
 				this.__warnedLoginRedirectUnsupported = true;
 				console.warn(
@@ -1107,7 +1107,7 @@ class FrappeDeskTheme {
 			const footer = document.querySelector("#desk-footer.sticky");
 			if (!footer) return;
 
-			const sidebarContainer = getSidebarContainer();
+			const sidebarContainer = fdtGetSidebarContainer();
 			const isExpanded = sidebarContainer && sidebarContainer.classList.contains("expanded");
 
 			// Update footer position based on sidebar state
@@ -1134,7 +1134,7 @@ class FrappeDeskTheme {
 		});
 
 		// Observe sidebar container for class changes
-		const sidebarContainer = getSidebarContainer();
+		const sidebarContainer = fdtGetSidebarContainer();
 		if (sidebarContainer) {
 			observer.observe(sidebarContainer, {
 				attributes: true,
