@@ -486,6 +486,9 @@ body {
 .nav.form-tabs,
 .row.form-section.card-section.visible-section {
     background-color: var(--content-bg) !important;
+    /* Match the border to the box background so the default light border does
+       not show as a white gap around the themed content panel. */
+    border-color: var(--content-bg) !important;
     border-radius: 10px;
     color: var(--content-text-color) !important;
 }
@@ -497,6 +500,9 @@ body {
 /* Main sidebar container - left navigation panel with custom background */
 .body-sidebar {
     background-color: var(--sidebar-bg,#f8f8f8) !important;
+    /* Match the border to the sidebar background to remove the default light
+       divider line between the sidebar and the content. */
+    border-color: var(--sidebar-bg,#f8f8f8) !important;
     color: var(--sidebar-text-color,#525252) !important;
 }
 
@@ -784,7 +790,10 @@ div.level-right {
 .widget.number-widget-box,
 .widget.dashboard-widget-box {
     background-color: var(--widget-bg);
-    border: 2px solid var(--widget-border);
+    /* Match the border to the widget background (invisible) so no white/contrasting
+       line shows around the card. Falls back to --widget-border if a card border
+       colour is explicitly configured. */
+    border: 2px solid var(--widget-border, var(--widget-bg));
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
