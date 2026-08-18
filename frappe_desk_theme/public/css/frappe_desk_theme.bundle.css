@@ -811,60 +811,83 @@ body.has-sticky-footer:not(:has(.main-section)) {
    (v16 markup) never match. These mirror them onto the v15 tree using the same custom
    properties, so one Desk Theme record drives both generations.
 
-   Rules above that target v16-only furniture — `.body-sidebar-top`, `.body-sidebar-cards`,
-   `.body-sidebar-bottom`, `.collapse-sidebar-link`, `.app-switcher-*`, the in-sidebar
-   `.dropdown-navbar-user` block, and `.section-break` labels — have no v15 counterpart: v15
-   keeps the user menu and app switcher in the top navbar. They are left as inert no-ops.
+   Everything is scoped to `.layout-side-section:has(.desk-sidebar)` — the WORKSPACE sidebar.
+   v15 reuses `.list-sidebar` for the list-view filter panel (Assigned To / Tags / Save Filter),
+   which has no `.desk-sidebar` inside it and keeps Frappe's default dark-on-light text. Styling
+   `.list-sidebar` unscoped would paint that panel with the sidebar background and leave its
+   links unreadable. Browsers without `:has()` simply fall through to stock styling.
+
+   Rules above that target v16-only furniture — `.body-sidebar-top/-cards/-bottom`,
+   `.collapse-sidebar-link`, `.app-switcher-*` and the in-sidebar `.dropdown-navbar-user` block —
+   have no v15 counterpart: v15 keeps the user menu and app switcher in the top navbar. They are
+   left as inert no-ops.
    ======================================== */
 
-/* Main sidebar container - left navigation panel with custom background */
-.layout-side-section .list-sidebar,
-.layout-side-section .desk-sidebar {
+/* Paint the whole column, not just the inner panel: the panel is inset inside a wider
+   Bootstrap column, so colouring only `.desk-sidebar` leaves the page background showing as a
+   pale gutter down both sides and behind the scroll bar. */
+.layout-side-section:has(.desk-sidebar),
+.layout-side-section:has(.desk-sidebar) .list-sidebar,
+.layout-side-section:has(.desk-sidebar) .desk-sidebar {
     background-color: var(--sidebar-bg, #f8f8f8) !important;
     color: var(--sidebar-text-color, #525252) !important;
 }
 
-.layout-side-section .desk-sidebar {
-    scrollbar-width: none;
+/* The column is the scroll container, so the scroll bar is styled here rather than on
+   `.desk-sidebar`, and the panel is stretched to fill it. */
+.layout-side-section:has(.desk-sidebar) {
+    scrollbar-color: var(--sidebar-hover-bg, #e9ecef) transparent;
+    scrollbar-width: thin;
 }
 
-/* Sidebar items - labels and icons */
-.desk-sidebar .sidebar-item-label,
-.desk-sidebar .standard-sidebar-item .item-anchor {
+.layout-side-section:has(.desk-sidebar) .list-sidebar,
+.layout-side-section:has(.desk-sidebar) .desk-sidebar {
+    height: 100%;
+    min-height: 100%;
+}
+
+/* Sidebar items - labels */
+.layout-side-section:has(.desk-sidebar) .sidebar-item-label,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item .item-anchor {
     color: var(--sidebar-text-color, #525252) !important;
 }
 
-.desk-sidebar .sidebar-item-icon svg,
-.desk-sidebar .sidebar-item-icon svg use {
-    fill: var(--sidebar-text-color, #525252) !important;
-    stroke: var(--sidebar-text-color, #525252) !important;
+/* v15 desk icons are stroke-only outlines: the <symbol> paths carry
+   stroke="var(--icon-stroke)" and no fill attribute. Setting `fill` on the <svg> therefore
+   flood-fills every outline into a solid blob, and leaving --icon-stroke at its default #383838
+   makes them near-invisible on a dark sidebar. Recolour through the icon variables instead. */
+.layout-side-section:has(.desk-sidebar) .sidebar-item-icon svg,
+.layout-side-section:has(.desk-sidebar) .sidebar-item-control svg {
+    --icon-stroke: var(--sidebar-text-color, #525252);
+    --icon-fill: transparent;
 }
 
 /* Section group headers (v15 equivalent of the v16 `.section-break` label) */
-.desk-sidebar .standard-sidebar-label,
-.desk-sidebar .standard-sidebar-label .section-title {
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-label,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-label .section-title {
     color: var(--sidebar-section-break-color, var(--sidebar-text-color, #525252)) !important;
     font-weight: var(--sidebar-section-break-font-weight, normal) !important;
 }
 
 /* Hover and active states */
-.desk-sidebar .standard-sidebar-item:hover,
-.desk-sidebar .standard-sidebar-item.selected,
-.desk-sidebar .standard-sidebar-item.active-sidebar {
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item:hover,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.selected,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.active-sidebar {
     background-color: var(--sidebar-hover-bg, #e9ecef) !important;
 }
 
-.desk-sidebar .standard-sidebar-item:hover .sidebar-item-label,
-.desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
-.desk-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-label,
-.desk-sidebar .standard-sidebar-item:hover .item-anchor {
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item:hover .sidebar-item-label,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item:hover .item-anchor,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.selected .sidebar-item-label,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.active-sidebar .sidebar-item-label {
     color: var(--sidebar-hover-text-color, #212529) !important;
 }
 
-.desk-sidebar .standard-sidebar-item:hover .sidebar-item-icon svg,
-.desk-sidebar .standard-sidebar-item:hover .sidebar-item-icon svg use {
-    fill: var(--sidebar-hover-text-color, #212529) !important;
-    stroke: var(--sidebar-hover-text-color, #212529) !important;
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item:hover .sidebar-item-icon svg,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.selected .sidebar-item-icon svg,
+.layout-side-section:has(.desk-sidebar) .standard-sidebar-item.active-sidebar .sidebar-item-icon svg {
+    --icon-stroke: var(--sidebar-hover-text-color, #212529);
+    --icon-fill: transparent;
 }
 
 /* Sticky footer offset - v15 sidebar column stands in for `.body-sidebar-container.expanded` */
