@@ -403,7 +403,13 @@ class FrappeDeskTheme {
 		root.style.setProperty("--footer-display", "flex");
 		root.style.setProperty("--footer-bg", "#f8f9fa");
 		root.style.setProperty("--footer-color", "#495057");
-		root.style.setProperty("--footer-border", "#dee2e6");
+		// Derive the footer rule from the footer text colour rather than pinning a grey:
+		// #dee2e6 is chosen for a near-white footer and shows as a pale line across the top of
+		// a coloured one. Resolved at use time, so it follows --footer-color whatever it is set to.
+		root.style.setProperty(
+			"--footer-border",
+			"color-mix(in srgb, var(--footer-color, #495057) 25%, transparent)"
+		);
 		root.style.setProperty("--footer-powered-color", "#6c757d");
 		root.style.setProperty("--footer-link-color", "#007bff");
 		root.style.setProperty("--footer-link-hover-color", "#0056b3");

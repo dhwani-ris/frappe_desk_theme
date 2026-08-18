@@ -346,6 +346,25 @@ body.dt-split-login-active .navbar {
     background-color: var(--navbar-bg, #fff);
 }
 
+/* Frappe underlines the navbar with --border-color (#ededed). That divider exists for a white
+   navbar, but the theme paints `.page-head` with --navbar-bg too, so the navbar and the page head
+   are one continuous block of colour and the line is a seam running through the middle of it —
+   it reads as a stray white bar the moment the navbar is coloured. Drop it and let the two
+   surfaces meet; the boundary to the page body below is already carried by the body background.
+   Keep the width so nothing shifts. */
+header.navbar {
+    border-bottom-color: transparent !important;
+}
+
+/* The item separator between the navbar controls is a genuine divider, but Frappe hardcodes it
+   to #525252, which is chosen against white. Tie it to the navbar text colour at low alpha so it
+   stays a hairline on a light or a dark bar. Flat rgba() is the pre-color-mix() fallback. */
+.navbar .vertical-bar {
+    --fdt-navbar-rule: rgba(0, 0, 0, 0.15);
+    --fdt-navbar-rule: color-mix(in srgb, var(--navbar-color, #555) 30%, transparent);
+    border-right-color: var(--fdt-navbar-rule) !important;
+}
+
 /* Navbar text elements - brand name and container text color */
 .navbar.container,
 .navbar-brand {
