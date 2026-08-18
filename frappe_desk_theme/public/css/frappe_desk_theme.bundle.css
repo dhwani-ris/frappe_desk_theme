@@ -802,3 +802,73 @@ body.has-sticky-footer:not(:has(.main-section)) {
     right: 20px;
 }
 
+
+/* ========================================
+   SIDEBAR STYLING — FRAPPE v15
+   ========================================
+   v15 renders the workspace sidebar as
+   `.layout-side-section > .list-sidebar > .desk-sidebar`, so the `.body-sidebar` rules above
+   (v16 markup) never match. These mirror them onto the v15 tree using the same custom
+   properties, so one Desk Theme record drives both generations.
+
+   Rules above that target v16-only furniture — `.body-sidebar-top`, `.body-sidebar-cards`,
+   `.body-sidebar-bottom`, `.collapse-sidebar-link`, `.app-switcher-*`, the in-sidebar
+   `.dropdown-navbar-user` block, and `.section-break` labels — have no v15 counterpart: v15
+   keeps the user menu and app switcher in the top navbar. They are left as inert no-ops.
+   ======================================== */
+
+/* Main sidebar container - left navigation panel with custom background */
+.layout-side-section .list-sidebar,
+.layout-side-section .desk-sidebar {
+    background-color: var(--sidebar-bg, #f8f8f8) !important;
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.layout-side-section .desk-sidebar {
+    scrollbar-width: none;
+}
+
+/* Sidebar items - labels and icons */
+.desk-sidebar .sidebar-item-label,
+.desk-sidebar .standard-sidebar-item .item-anchor {
+    color: var(--sidebar-text-color, #525252) !important;
+}
+
+.desk-sidebar .sidebar-item-icon svg,
+.desk-sidebar .sidebar-item-icon svg use {
+    fill: var(--sidebar-text-color, #525252) !important;
+    stroke: var(--sidebar-text-color, #525252) !important;
+}
+
+/* Section group headers (v15 equivalent of the v16 `.section-break` label) */
+.desk-sidebar .standard-sidebar-label,
+.desk-sidebar .standard-sidebar-label .section-title {
+    color: var(--sidebar-section-break-color, var(--sidebar-text-color, #525252)) !important;
+    font-weight: var(--sidebar-section-break-font-weight, normal) !important;
+}
+
+/* Hover and active states */
+.desk-sidebar .standard-sidebar-item:hover,
+.desk-sidebar .standard-sidebar-item.selected,
+.desk-sidebar .standard-sidebar-item.active-sidebar {
+    background-color: var(--sidebar-hover-bg, #e9ecef) !important;
+}
+
+.desk-sidebar .standard-sidebar-item:hover .sidebar-item-label,
+.desk-sidebar .standard-sidebar-item.selected .sidebar-item-label,
+.desk-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-label,
+.desk-sidebar .standard-sidebar-item:hover .item-anchor {
+    color: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+.desk-sidebar .standard-sidebar-item:hover .sidebar-item-icon svg,
+.desk-sidebar .standard-sidebar-item:hover .sidebar-item-icon svg use {
+    fill: var(--sidebar-hover-text-color, #212529) !important;
+    stroke: var(--sidebar-hover-text-color, #212529) !important;
+}
+
+/* Sticky footer offset - v15 sidebar column stands in for `.body-sidebar-container.expanded` */
+.layout-side-section ~ * .desk-footer,
+.layout-side-section + .layout-main-section .desk-footer {
+    margin-left: 0;
+}

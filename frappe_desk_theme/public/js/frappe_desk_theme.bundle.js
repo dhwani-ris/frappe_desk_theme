@@ -1,4 +1,33 @@
 /**
+ * Framework-generation compatibility.
+ *
+ * v16 renders the workspace sidebar into `.body-sidebar-container` and exposes the sidebar object
+ * as `frappe.app.sidebar`. v15 renders it into `.layout-side-section` and has no equivalent
+ * sidebar object — `frappe.views.Workspace` owns the markup and offers none of the named-sidebar
+ * switching methods (`setup`, `set_workspace_sidebar`, ...) that v16 provides.
+ */
+const IS_V15 = !!(
+	typeof frappe !== "undefined" &&
+	frappe.views &&
+	frappe.views.Workspace &&
+	frappe.views.Workspace.prototype.build_sidebar_section
+);
+
+// Sidebar container, whichever generation is rendering it.
+const SIDEBAR_CONTAINER_SELECTOR = ".body-sidebar-container, .layout-side-section";
+
+function getSidebarContainer() {
+	return document.querySelector(SIDEBAR_CONTAINER_SELECTOR);
+}
+
+// Desk base path: /app on v15, /desk on v16.
+function isDeskPath() {
+	return (
+		window.location.pathname.startsWith("/desk") || window.location.pathname.startsWith("/app")
+	);
+}
+
+/**
  * FrappeDeskTheme - Main theme management class
  * Handles loading, applying, and managing custom theme configurations for Frappe Desk
  * Supports dynamic theme changes, user role-based hiding, and real-time DOM updates
@@ -721,7 +750,7 @@ class FrappeDeskTheme {
 	 * Adds/removes 'expanded' class to control sidebar state
 	 */
 	toggleSidebar() {
-		const sidebarContainer = document.querySelector(".body-sidebar-container");
+		const sidebarContainer = getSidebarContainer();
 		if (!sidebarContainer) {
 			return;
 		}
@@ -779,6 +808,20 @@ class FrappeDeskTheme {
 		}
 
 		if (!this.themeData || !this.themeData.fixed_sidebar) {
+			return;
+		}
+
+		// v16 only. The fixed sidebar works by overriding the named-workspace-sidebar switching
+		// methods on `frappe.app.sidebar`; v15 has neither that object nor those methods
+		// (`setup`, `set_workspace_sidebar`, `show_sidebar_for_module`, `set_sidebar_for_page`),
+		// because it renders exactly one workspace sidebar. Nothing to pin, so this is a no-op.
+		if (IS_V15) {
+			if (!this.__warnedFixedSidebarUnsupported) {
+				this.__warnedFixedSidebarUnsupported = true;
+				console.warn(
+					"[frappe_desk_theme] 'Fixed Sidebar' requires Frappe v16 and is ignored on v15."
+				);
+			}
 			return;
 		}
 
@@ -857,7 +900,20 @@ class FrappeDeskTheme {
 		}
 
 		// Only act inside Desk
-		if (!window.location.pathname.startsWith("/desk")) {
+		if (!isDeskPath()) {
+			return;
+		}
+
+		// v16 only. The target page is resolved from `frappe.boot.workspace_sidebar_item`, a boot
+		// key v15 does not populate (its nearest equivalent, `allowed_workspaces`, carries no
+		// per-sidebar item list to pick a first link from).
+		if (IS_V15) {
+			if (!this.__warnedLoginRedirectUnsupported) {
+				this.__warnedLoginRedirectUnsupported = true;
+				console.warn(
+					"[frappe_desk_theme] 'Redirect To Sidebar On Login' requires Frappe v16 and is ignored on v15."
+				);
+			}
 			return;
 		}
 
@@ -1051,7 +1107,7 @@ class FrappeDeskTheme {
 			const footer = document.querySelector("#desk-footer.sticky");
 			if (!footer) return;
 
-			const sidebarContainer = document.querySelector(".body-sidebar-container");
+			const sidebarContainer = getSidebarContainer();
 			const isExpanded = sidebarContainer && sidebarContainer.classList.contains("expanded");
 
 			// Update footer position based on sidebar state
@@ -1068,7 +1124,8 @@ class FrappeDeskTheme {
 				if (
 					mutation.type === "attributes" &&
 					mutation.attributeName === "class" &&
-					mutation.target.classList.contains("body-sidebar-container")
+					(mutation.target.classList.contains("body-sidebar-container") ||
+						mutation.target.classList.contains("layout-side-section"))
 				) {
 					// Delay to ensure CSS transitions complete
 					setTimeout(updateStickyFooterPosition, 50);
@@ -1077,7 +1134,7 @@ class FrappeDeskTheme {
 		});
 
 		// Observe sidebar container for class changes
-		const sidebarContainer = document.querySelector(".body-sidebar-container");
+		const sidebarContainer = getSidebarContainer();
 		if (sidebarContainer) {
 			observer.observe(sidebarContainer, {
 				attributes: true,
