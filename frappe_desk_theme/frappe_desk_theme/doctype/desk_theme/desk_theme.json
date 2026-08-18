@@ -20,10 +20,12 @@
   "page_background_type",
   "login_page_background_color",
   "login_page_background_image",
+  "carousel_images",
   "column_break_xyqa",
   "login_box_position",
+  "login_split_panel_width",
+  "login_split_panel_background_color",
   "is_app_details_inside_the_box",
-  "carousel_images",
   "allow_manual_navigation",
   "navbar_tab",
   "navbar_section",
@@ -186,10 +188,26 @@
   },
   {
    "default": "Default",
+   "description": "Split Right / Split Left render the login form as a full-height side panel, with the page background filling the remaining width.",
    "fieldname": "login_box_position",
    "fieldtype": "Select",
    "label": "Login Box Position",
-   "options": "Default\nLeft\nRight"
+   "options": "Default\nLeft\nRight\nSplit Right\nSplit Left"
+  },
+  {
+   "default": "20",
+   "depends_on": "eval:in_list([\"Split Right\", \"Split Left\"], doc.login_box_position)",
+   "description": "Width of the login panel as a percentage of the screen. The page background fills the rest (e.g. 20 gives an 80 / 20 split).",
+   "fieldname": "login_split_panel_width",
+   "fieldtype": "Percent",
+   "label": "Login Panel Width"
+  },
+  {
+   "depends_on": "eval:in_list([\"Split Right\", \"Split Left\"], doc.login_box_position)",
+   "description": "Background of the login panel itself. Leave blank to reuse Box Background Color.",
+   "fieldname": "login_split_panel_background_color",
+   "fieldtype": "Color",
+   "label": "Login Panel Background Color"
   },
   {
    "fieldname": "login_page_button_hover_background_color",
@@ -585,7 +603,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-07-21 13:01:00.000000",
+ "modified": "2026-08-05 11:28:42.350076",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",

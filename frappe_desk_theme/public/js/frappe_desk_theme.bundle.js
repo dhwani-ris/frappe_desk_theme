@@ -23,7 +23,9 @@ class FrappeDeskTheme {
 
 	/**
 	 * Initialize the theme system
-	 * First applies cached theme immediately, then loads fresh data if needed
+	 * Paints the cached theme immediately, then always revalidates against the
+	 * server (stale-while-revalidate) so a saved Desk Theme change shows up on
+	 * the next page load
 	 * Uses async/await pattern with graceful error handling
 	 */
 	async init() {
@@ -31,15 +33,29 @@ class FrappeDeskTheme {
 			// Apply cached theme immediately to prevent flickering
 			this.applyCachedTheme();
 
-			// Load fresh theme data if needed (async)
-			await this.loadThemeIfNeeded();
+			// A valid cache has already populated themeData, so listeners can be
+			// wired straight away instead of waiting on the revalidation below.
+			// Without a cache we keep the original ordering and wire them after
+			// the fetch, so the MutationObserver never runs before theme data
+			// exists - the methods it calls assume it is there.
+			const paintedFromCache = !!this.themeData;
+			if (paintedFromCache) {
+				this.setupEventListeners();
+			}
+
+			// Always revalidate. Skipping this while the cache was still "valid"
+			// meant a Desk Theme change stayed invisible for up to the 30-day
+			// cache lifetime - and the login page has no Clear Cache button.
+			await this.loadTheme();
 
 			// Apply fresh theme if we got new data
 			if (this.themeData) {
 				this.applyTheme();
 			}
 
-			this.setupEventListeners();
+			if (!paintedFromCache) {
+				this.setupEventListeners();
+			}
 		} catch (error) {
 			// Production-ready silent fail - apply default theme and show login box
 			this.applyTheme();
@@ -62,10 +78,12 @@ class FrappeDeskTheme {
 
 	/**
 	 * Apply cached theme immediately to prevent UI flickering
+	 * Only paints a cache that is still within its lifetime - anything older is
+	 * left to the revalidation fetch in init()
 	 */
 	applyCachedTheme() {
 		const cachedData = this.getCachedTheme();
-		if (cachedData && cachedData.data) {
+		if (cachedData && cachedData.data && this.isCacheValid()) {
 			this.themeData = cachedData.data;
 			this.applyTheme();
 		} else {
@@ -116,18 +134,6 @@ class FrappeDeskTheme {
 		const cacheAge = now - cachedData.timestamp;
 
 		return cacheAge < this.cacheTimeout; // 30 days
-	}
-
-	/**
-	 * Load theme only if cache is invalid or doesn't exist
-	 */
-	async loadThemeIfNeeded() {
-		// Skip API call if cache is still valid
-		if (this.isCacheValid()) {
-			return;
-		}
-
-		await this.loadTheme();
 	}
 
 	/**
@@ -330,6 +336,10 @@ class FrappeDeskTheme {
 			"--login-box-top",
 			"--login-box-bg-override",
 			"--login-box-border-radius",
+			"--login-box-padding",
+			"--login-box-width",
+			"--login-split-panel-width",
+			"--login-split-panel-bg",
 			"--search-bar-display",
 			"--navbar-toggler-border",
 			"--breadcrumb-disabled-color",
@@ -378,6 +388,10 @@ class FrappeDeskTheme {
 		root.style.setProperty("--sidebar-hover-text-color", "#212529");
 		root.style.setProperty("--login-box-width", "400px");
 		root.style.setProperty("--search-bar-display", "block");
+
+		// Split login panel defaults - 80 / 20 split, white panel
+		root.style.setProperty("--login-split-panel-width", "20%");
+		root.style.setProperty("--login-split-panel-bg", "#fff");
 
 		// Navigation and UI component defaults
 		root.style.setProperty("--navbar-toggler-border", "#dee2e6");
@@ -428,8 +442,19 @@ class FrappeDeskTheme {
 			}
 		}
 
-		// Login box positioning - supports Left, Right, or Default positioning
-		if (theme.login_box_position && theme.login_box_position !== "Default") {
+		// Login box positioning - supports Left, Right, Default, or a full-height split panel
+		if (this.getSplitLoginSide()) {
+			// Split layout - the panel itself is laid out in CSS (.dt-split-login),
+			// only its width and background travel through CSS variables.
+			// The panel falls back to Box Background Color so themes configured
+			// before the dedicated panel colour existed keep rendering the same.
+			root.style.setProperty("--login-split-panel-width", this.getSplitPanelWidth());
+			const panelBackground =
+				theme.login_split_panel_background_color || theme.login_box_background_color;
+			if (panelBackground) {
+				root.style.setProperty("--login-split-panel-bg", panelBackground);
+			}
+		} else if (theme.login_box_position && theme.login_box_position !== "Default") {
 			root.style.setProperty("--login-box-position", "absolute");
 			root.style.setProperty(
 				"--login-box-right",
@@ -670,6 +695,58 @@ class FrappeDeskTheme {
 	}
 
 	/**
+	 * Resolve which side the login form sits on in split layout mode
+	 * @returns {"right"|"left"|null} Null when a non-split position is configured
+	 */
+	getSplitLoginSide() {
+		const position = this.themeData?.login_box_position;
+		if (position === "Split Right") {
+			return "right";
+		}
+		if (position === "Split Left") {
+			return "left";
+		}
+		return null;
+	}
+
+	/**
+	 * Width of the login panel in split mode as a CSS percentage
+	 * Falls back to 20% (an 80/20 split) when unset or out of range
+	 * @returns {string} CSS length, e.g. "20%"
+	 */
+	getSplitPanelWidth() {
+		const width = parseFloat(this.themeData?.login_split_panel_width);
+		return `${width > 0 && width < 100 ? width : 20}%`;
+	}
+
+	/**
+	 * Toggle split-login layout classes on the login page container
+	 * CSS handles the actual layout - this only reflects the configured side.
+	 * The body class exists because elements outside #page-login (the language
+	 * picker navbar) also need to know the layout is active.
+	 */
+	applySplitLoginLayout() {
+		const loginPage = document.querySelector("#page-login");
+		if (!loginPage) {
+			return;
+		}
+
+		const side = this.getSplitLoginSide();
+		loginPage.classList.toggle("dt-split-login", !!side);
+		loginPage.classList.toggle("dt-split-login-right", side === "right");
+		loginPage.classList.toggle("dt-split-login-left", side === "left");
+		document.body.classList.toggle("dt-split-login-active", !!side);
+
+		// "Is App Logo Inside The Box" - same intent as the other positions:
+		// flatten the card so logo, title and form read as one block. Without
+		// it the card keeps its own background/border inside the panel.
+		loginPage.classList.toggle(
+			"dt-split-login-flat",
+			!!side && this.themeData?.is_app_details_inside_the_box === 1
+		);
+	}
+
+	/**
 	 * Apply all theme configurations to the current page
 	 * Orchestrates the application of CSS variables and UI element toggles
 	 */
@@ -684,6 +761,7 @@ class FrappeDeskTheme {
 			/* ignore */
 		}
 		this.setCSSVariables();
+		this.applySplitLoginLayout();
 		this.toggleSidebar();
 		this.toggleSearchBar();
 		this.hideStandardMenu();

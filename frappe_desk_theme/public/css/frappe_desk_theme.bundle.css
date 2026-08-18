@@ -154,6 +154,190 @@ label.control-label {
 }
 
 /* ========================================
+   SPLIT LOGIN LAYOUT
+   (Desk Theme > Login Page > Login Box Position = Split Right / Split Left)
+   ========================================
+
+   Splits the login page into two columns: the configured page background
+   (Color, Image or Carousel) fills the wide side, and the login form becomes a
+   full-height panel on the narrow side. Panel width comes from the theme's
+   Login Panel Width (%) field via --login-split-panel-width (default 20%,
+   i.e. an 80/20 split), floored at 320px so the form stays usable.
+   ======================================== */
+
+#page-login.dt-split-login {
+    /* Single source of truth for the panel width - background side and form
+       side must always resolve to the same value or they overlap */
+    --dt-split-panel-size: max(var(--login-split-panel-width, 20%), 320px);
+
+    /* Background moves to ::before so it can be clipped to the wide side;
+       the container itself only shows the panel colour */
+    background: var(--login-split-panel-bg, #fff) !important;
+    background-image: none !important;
+    overflow-x: hidden;
+}
+
+/* Background side - color, static image and carousel all render here */
+#page-login.dt-split-login::before {
+    background-color: var(--login-bg-color, transparent);
+    background-image: var(--login-bg-carousel-image, var(--login-bg-image, none));
+}
+
+/* Longhands, not the inset shorthand: rtlcss flips left/right declarations but
+   leaves a 4-value inset containing var() untouched, which would put the
+   background gap and the panel on opposite sides in the RTL bundle. */
+#page-login.dt-split-login-right::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: var(--dt-split-panel-size);
+}
+
+#page-login.dt-split-login-left::before {
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: var(--dt-split-panel-size);
+}
+
+/* Login form sections - full-height panel pinned to the narrow side.
+   Note: no !important on display. Frappe's login.js hides the inactive
+   sections with an inline display:none, which must keep winning. */
+#page-login.dt-split-login .for-login,
+#page-login.dt-split-login .for-email-login,
+#page-login.dt-split-login .for-signup,
+#page-login.dt-split-login .for-forgot,
+#page-login.dt-split-login .for-login-with-email-link {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: var(--dt-split-panel-size);
+    max-width: 100%;
+    margin: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    /* Centering via auto margins on the children rather than
+       justify-content: center - auto margins collapse to 0 once the form is
+       taller than the panel, so nothing scrolls out of reach */
+    justify-content: flex-start;
+    overflow-y: auto;
+    background-color: var(--login-split-panel-bg, #fff) !important;
+    border-radius: 0 !important;
+    /* Above the background panel (0) and the carousel arrows (--carousel-nav-z) */
+    z-index: 3;
+}
+
+#page-login.dt-split-login .for-login > :first-child,
+#page-login.dt-split-login .for-email-login > :first-child,
+#page-login.dt-split-login .for-signup > :first-child,
+#page-login.dt-split-login .for-forgot > :first-child,
+#page-login.dt-split-login .for-login-with-email-link > :first-child {
+    margin-top: auto;
+}
+
+#page-login.dt-split-login .for-login > :last-child,
+#page-login.dt-split-login .for-email-login > :last-child,
+#page-login.dt-split-login .for-signup > :last-child,
+#page-login.dt-split-login .for-forgot > :last-child,
+#page-login.dt-split-login .for-login-with-email-link > :last-child {
+    margin-bottom: auto;
+}
+
+/* Language picker navbar - it is a sibling of #page-login, so it needs the
+   body-level class. Without a higher z-index than the panel (3) the picker
+   sits underneath the panel and cannot be clicked. */
+body.dt-split-login-active .navbar {
+    position: relative;
+    z-index: 4;
+}
+
+#page-login.dt-split-login-right .for-login,
+#page-login.dt-split-login-right .for-email-login,
+#page-login.dt-split-login-right .for-signup,
+#page-login.dt-split-login-right .for-forgot,
+#page-login.dt-split-login-right .for-login-with-email-link {
+    right: 0;
+    left: auto;
+}
+
+#page-login.dt-split-login-left .for-login,
+#page-login.dt-split-login-left .for-email-login,
+#page-login.dt-split-login-left .for-signup,
+#page-login.dt-split-login-left .for-forgot,
+#page-login.dt-split-login-left .for-login-with-email-link {
+    left: 0;
+    right: auto;
+}
+
+/* Form card - fits the panel instead of the fixed --login-box-width box, but
+   otherwise keeps every card setting the other positions honour: Box
+   Background Color, its border, and its padding all still apply. The width
+   becomes a cap so a 400px box never overflows a narrower panel. */
+#page-login.dt-split-login .login-content.page-card,
+#page-login.dt-split-login .signup-content.page-card {
+    width: 100%;
+    max-width: min(100%, var(--login-box-width, 400px));
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 10px;
+}
+
+/* "Is App Logo Inside The Box" - flatten the card into the panel so the logo,
+   title and form read as a single block on the panel background */
+#page-login.dt-split-login-flat .login-content.page-card,
+#page-login.dt-split-login-flat .signup-content.page-card {
+    padding: 0;
+    border: none !important;
+    background-color: transparent !important;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* Carousel navigation - keep the arrows inside the background side */
+#page-login.dt-split-login-right .carousel-nav-right {
+    right: calc(var(--dt-split-panel-size) + 20px);
+}
+
+#page-login.dt-split-login-left .carousel-nav-left {
+    left: calc(var(--dt-split-panel-size) + 20px);
+}
+
+/* Mobile - a 20% column is unusable, so the split collapses: the background
+   covers the full viewport and the form returns to the normal flow as a card */
+@media (max-width: 768px) {
+    #page-login.dt-split-login .for-login,
+    #page-login.dt-split-login .for-email-login,
+    #page-login.dt-split-login .for-signup,
+    #page-login.dt-split-login .for-forgot,
+    #page-login.dt-split-login .for-login-with-email-link {
+        position: static;
+        width: auto;
+        max-width: 400px;
+        margin: 24px auto;
+        padding: 20px;
+        overflow-y: visible;
+        border-radius: 10px !important;
+    }
+
+    #page-login.dt-split-login-right::before,
+    #page-login.dt-split-login-left::before {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    #page-login.dt-split-login-right .carousel-nav-right {
+        right: 20px;
+    }
+
+    #page-login.dt-split-login-left .carousel-nav-left {
+        left: 20px;
+    }
+}
+
+/* ========================================
    NAVIGATION BAR STYLING (Desk Theme > Navbar)
    ======================================== */
 

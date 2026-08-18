@@ -2,7 +2,12 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
+
+SPLIT_LOGIN_POSITIONS = ("Split Right", "Split Left")
+DEFAULT_SPLIT_PANEL_WIDTH = 20
 
 
 class DeskTheme(Document):
@@ -13,6 +18,27 @@ class DeskTheme(Document):
 				# Fallback: clear page_background_type
 				self.page_background_type = ""
 				frappe.msgprint("No carousel images found. Falling back to default background.")
+
+		self.validate_split_panel_width()
+
+	def validate_split_panel_width(self):
+		"""Split login panel width must leave room for both columns"""
+		if self.login_box_position not in SPLIT_LOGIN_POSITIONS:
+			return
+
+		# flt() first: the field can still hold a string here, and comparing that
+		# against an int would raise and make the whole DocType unsaveable
+		width = flt(self.login_split_panel_width)
+		if 0 < width < 100:
+			self.login_split_panel_width = width
+			return
+
+		self.login_split_panel_width = DEFAULT_SPLIT_PANEL_WIDTH
+		frappe.msgprint(
+			_("Login Panel Width must be between 1 and 99. Falling back to {0}%.").format(
+				DEFAULT_SPLIT_PANEL_WIDTH
+			)
+		)
 
 	def on_update(self):
 		# Update website settings with footer information
