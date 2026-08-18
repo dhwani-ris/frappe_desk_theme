@@ -300,10 +300,24 @@ body {
 .layout-main,
 .form-page,
 .nav.form-tabs,
+.form-tabs-list,
 .row.form-section.card-section.visible-section {
     background-color: var(--content-bg) !important;
     border-radius: 10px;
     color: var(--content-text-color) !important;
+}
+
+/* Frappe draws the card outline, the tab strip underline and the section dividers with
+   `--border-color` (#ededed). That is invisible against Frappe's default white page, but once the
+   content box is given a saturated colour those greys read as hard white lines framing the card.
+   Recolour them as a translucent tint of the content text colour so a divider stays a divider on
+   a light or a dark content box. The flat rgba() is a fallback for engines without color-mix(). */
+.form-page,
+.form-tabs-list,
+.row.form-section.card-section {
+    --fdt-divider: rgba(0, 0, 0, 0.12);
+    --fdt-divider: color-mix(in srgb, var(--content-text-color, #1f2937) 16%, transparent);
+    border-color: var(--fdt-divider) !important;
 }
 
 /* ========================================
