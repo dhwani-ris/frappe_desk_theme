@@ -344,11 +344,16 @@ body {
 /* Fall back to Frappe's own tab variables, not to the content text colour: the framework greys
    inactive tabs (--text-muted) and darkens the open one (--text-color), so collapsing both onto
    one colour would erase that distinction for anyone who leaves these controls blank. */
+/* The tab buttons themselves are transparent in stock Frappe — every one of them, including
+   the open tab — so they simply show whatever is behind the strip. These give each button a
+   background of its own; left blank they stay transparent, which is the previous behaviour. */
 .form-tabs-list .nav-link {
+    background-color: var(--form-tab-item-bg, transparent) !important;
     color: var(--form-tab-color, var(--text-muted)) !important;
 }
 
 .form-tabs-list .nav-link.active {
+    background-color: var(--form-tab-active-bg, var(--form-tab-item-bg, transparent)) !important;
     color: var(--form-tab-active-color, var(--text-color)) !important;
     border-bottom-color: var(--form-tab-indicator, var(--text-color)) !important;
 }

@@ -52,8 +52,10 @@
   "main_body_content_box_text_color",
   "form_tabs_section",
   "form_tab_background_color",
+  "form_tab_item_background_color",
   "form_tab_text_color",
   "column_break_form_tabs",
+  "form_tab_active_background_color",
   "form_tab_active_text_color",
   "form_tab_active_indicator_color",
   "table_tab",
@@ -344,6 +346,12 @@
    "description": "Background of the tab strip on forms (Form / Settings / Connections). Falls back to the content box background."
   },
   {
+   "fieldname": "form_tab_item_background_color",
+   "fieldtype": "Color",
+   "label": "Tab Item Background Color",
+   "description": "Background of each individual tab button. Leave blank to let the tab strip colour show through."
+  },
+  {
    "fieldname": "form_tab_text_color",
    "fieldtype": "Color",
    "label": "Tab Text Color",
@@ -352,6 +360,12 @@
   {
    "fieldname": "column_break_form_tabs",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "form_tab_active_background_color",
+   "fieldtype": "Color",
+   "label": "Active Tab Background Color",
+   "description": "Background of the tab currently open. Leave blank to use the tab item background."
   },
   {
    "fieldname": "form_tab_active_text_color",

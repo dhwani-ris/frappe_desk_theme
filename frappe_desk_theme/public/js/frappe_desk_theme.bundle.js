@@ -337,6 +337,8 @@ class FrappeDeskTheme {
 			"--body-bg",
 			"--content-bg",
 			"--form-tab-bg",
+			"--form-tab-item-bg",
+			"--form-tab-active-bg",
 			"--form-tab-color",
 			"--form-tab-active-color",
 			"--form-tab-indicator",
@@ -638,6 +640,12 @@ class FrappeDeskTheme {
 		// back to the content-box colours when a control is left blank.
 		if (theme.form_tab_background_color) {
 			root.style.setProperty("--form-tab-bg", theme.form_tab_background_color);
+		}
+		if (theme.form_tab_item_background_color) {
+			root.style.setProperty("--form-tab-item-bg", theme.form_tab_item_background_color);
+		}
+		if (theme.form_tab_active_background_color) {
+			root.style.setProperty("--form-tab-active-bg", theme.form_tab_active_background_color);
 		}
 		if (theme.form_tab_text_color) {
 			root.style.setProperty("--form-tab-color", theme.form_tab_text_color);
