@@ -333,7 +333,11 @@ body {
    back to the content-box colours, so leaving these blank keeps the previous behaviour. The
    labels live on `.nav-link` inside `.form-tabs-list`; Frappe marks the open one with `.active`
    and an underline, which is why the active label and the indicator are separate controls. */
-.form-tabs-list {
+/* Both layers, not just the wrapper: `.form-tabs-list` holds the strip but the inner
+   `<ul class="nav form-tabs">` is painted by the content-box rule above and covers it, so
+   colouring only the wrapper leaves the tab background looking unchanged. */
+.form-tabs-list,
+.form-tabs-list .nav.form-tabs {
     background-color: var(--form-tab-bg, var(--content-bg)) !important;
 }
 
