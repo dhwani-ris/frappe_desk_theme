@@ -93,10 +93,7 @@
   "column_break_footer",
   "footer_powered_by",
   "footer_text_color",
-  "desk_behavior_tab",
-  "fixed_sidebar",
-  "column_break_cgnw",
-  "redirect_to_sidebar_on_login"
+  "column_break_cgnw"
  ],
  "fields": [
   {
@@ -525,25 +522,6 @@
    "fieldname": "collapse_sidebar_groups",
    "fieldtype": "Check",
    "label": "Collapse Sidebar Groups"
-  },
-  {
-   "fieldname": "desk_behavior_tab",
-   "fieldtype": "Tab Break",
-   "label": "Desk Behavior"
-  },
-  {
-   "description": "Fixed workspace sidebar to show for all modules",
-   "fieldname": "fixed_sidebar",
-   "fieldtype": "Link",
-   "label": "Fixed Workspace Sidebar",
-   "options": "Workspace Sidebar"
-  },
-  {
-   "default": "0",
-   "description": "If enabled, after login redirect to the first item from the fixed sidebar instead of the default desktop screen",
-   "fieldname": "redirect_to_sidebar_on_login",
-   "fieldtype": "Check",
-   "label": "Redirect to Sidebar After Login"
   },
   {
    "fieldname": "column_break_ntnk",

@@ -30,6 +30,12 @@ def apply_version_compatibility():
 		if not frappe.db.exists("DocType", doctype):
 			continue
 
+		# The field itself was dropped from the schema on this branch, so there is nothing to
+		# reshape. Kept guarded rather than deleted so the protection is already in place if
+		# `fixed_sidebar` is ever reintroduced (e.g. by a merge from development).
+		if not frappe.get_meta(doctype).get_field(fieldname):
+			continue
+
 		if frappe.db.exists("DocType", target):
 			_restore_link(doctype, fieldname, target)
 		else:
