@@ -326,6 +326,29 @@ body {
     color: var(--content-text-color) !important;
 }
 
+/* ========================================
+   FORM TABS
+   ========================================
+   The tab strip on forms (Form / Settings / Connections). Each control is optional and falls
+   back to the content-box colours, so leaving these blank keeps the previous behaviour. The
+   labels live on `.nav-link` inside `.form-tabs-list`; Frappe marks the open one with `.active`
+   and an underline, which is why the active label and the indicator are separate controls. */
+.form-tabs-list {
+    background-color: var(--form-tab-bg, var(--content-bg)) !important;
+}
+
+/* Fall back to Frappe's own tab variables, not to the content text colour: the framework greys
+   inactive tabs (--text-muted) and darkens the open one (--text-color), so collapsing both onto
+   one colour would erase that distinction for anyone who leaves these controls blank. */
+.form-tabs-list .nav-link {
+    color: var(--form-tab-color, var(--text-muted)) !important;
+}
+
+.form-tabs-list .nav-link.active {
+    color: var(--form-tab-active-color, var(--text-color)) !important;
+    border-bottom-color: var(--form-tab-indicator, var(--text-color)) !important;
+}
+
 /* Frappe draws the card outline, the tab strip underline and the section dividers with
    `--border-color` (#ededed). That is invisible against Frappe's default white page, but once the
    content box is given a saturated colour those greys read as hard white lines framing the card.

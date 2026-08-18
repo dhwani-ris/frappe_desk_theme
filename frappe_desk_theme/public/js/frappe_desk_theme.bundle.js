@@ -336,6 +336,10 @@ class FrappeDeskTheme {
 			"--btn-secondary-hover-color",
 			"--body-bg",
 			"--content-bg",
+			"--form-tab-bg",
+			"--form-tab-color",
+			"--form-tab-active-color",
+			"--form-tab-indicator",
 			"--table-head-bg",
 			"--table-head-color",
 			"--table-body-bg",
@@ -628,6 +632,21 @@ class FrappeDeskTheme {
 		}
 		if (theme.main_body_content_box_text_color) {
 			root.style.setProperty("--content-text-color", theme.main_body_content_box_text_color);
+		}
+
+		// Form tab strip (Form / Settings / Connections). Each is optional — the stylesheet falls
+		// back to the content-box colours when a control is left blank.
+		if (theme.form_tab_background_color) {
+			root.style.setProperty("--form-tab-bg", theme.form_tab_background_color);
+		}
+		if (theme.form_tab_text_color) {
+			root.style.setProperty("--form-tab-color", theme.form_tab_text_color);
+		}
+		if (theme.form_tab_active_text_color) {
+			root.style.setProperty("--form-tab-active-color", theme.form_tab_active_text_color);
+		}
+		if (theme.form_tab_active_indicator_color) {
+			root.style.setProperty("--form-tab-indicator", theme.form_tab_active_indicator_color);
 		}
 
 		// Sidebar customization

@@ -50,6 +50,12 @@
   "column_break_ojdd",
   "main_body_content_box_background_color",
   "main_body_content_box_text_color",
+  "form_tabs_section",
+  "form_tab_background_color",
+  "form_tab_text_color",
+  "column_break_form_tabs",
+  "form_tab_active_text_color",
+  "form_tab_active_indicator_color",
   "table_tab",
   "table_head_background_color",
   "table_body_background_color",
@@ -325,6 +331,39 @@
    "fieldname": "main_body_content_box_text_color",
    "fieldtype": "Color",
    "label": "Text Color"
+  },
+  {
+   "fieldname": "form_tabs_section",
+   "fieldtype": "Section Break",
+   "label": "Form Tabs"
+  },
+  {
+   "fieldname": "form_tab_background_color",
+   "fieldtype": "Color",
+   "label": "Tab Background Color",
+   "description": "Background of the tab strip on forms (Form / Settings / Connections). Falls back to the content box background."
+  },
+  {
+   "fieldname": "form_tab_text_color",
+   "fieldtype": "Color",
+   "label": "Tab Text Color",
+   "description": "Label colour of inactive tabs."
+  },
+  {
+   "fieldname": "column_break_form_tabs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "form_tab_active_text_color",
+   "fieldtype": "Color",
+   "label": "Active Tab Text Color",
+   "description": "Label colour of the tab currently open."
+  },
+  {
+   "fieldname": "form_tab_active_indicator_color",
+   "fieldtype": "Color",
+   "label": "Active Tab Indicator Color",
+   "description": "Underline that marks the open tab."
   },
   {
    "fieldname": "table_tab",
