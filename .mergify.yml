@@ -1,0 +1,13 @@
+# Paths that are intentionally different between version-15 and version-16.
+# These files encode a genuine Frappe v15/v16 compatibility difference (a
+# hooks.py conditional, a doctype field only valid on one generation, DOM
+# selectors scoped to one generation's markup, etc.) and must never be
+# auto-synced or blindly merged between the two version branches.
+divergent_paths:
+  - pyproject.toml
+  - frappe_desk_theme/hooks.py
+  - frappe_desk_theme/frappe_desk_theme/doctype/desk_theme/desk_theme.json
+  - frappe_desk_theme/frappe_desk_theme/doctype/desk_theme/desk_theme.py
+  - frappe_desk_theme/public/css/frappe_desk_theme.bundle.css
+  - frappe_desk_theme/public/js/frappe_desk_theme.bundle.js
+  - frappe_desk_theme/public/js/sidebar/sidebar_override.bundle.js
