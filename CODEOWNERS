@@ -1,0 +1,9 @@
+# Files that legitimately diverge between version-15 and version-16 - require
+# review from someone who understands both branches before merging either way.
+pyproject.toml                                                              @bhushan-barbuddhe
+frappe_desk_theme/hooks.py                                                  @bhushan-barbuddhe
+frappe_desk_theme/frappe_desk_theme/doctype/desk_theme/desk_theme.json      @bhushan-barbuddhe
+frappe_desk_theme/frappe_desk_theme/doctype/desk_theme/desk_theme.py        @bhushan-barbuddhe
+frappe_desk_theme/public/css/frappe_desk_theme.bundle.css                   @bhushan-barbuddhe
+frappe_desk_theme/public/js/frappe_desk_theme.bundle.js                     @bhushan-barbuddhe
+frappe_desk_theme/public/js/sidebar/sidebar_override.bundle.js              @bhushan-barbuddhe
