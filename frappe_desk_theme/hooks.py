@@ -101,10 +101,7 @@ app_include_icons = (
 # ------------
 
 # before_install = "frappe_desk_theme.install.before_install"
-after_install = "frappe_desk_theme.compat.apply_version_compatibility"
-
-# Re-applied on every migrate so the schema follows the site across a v15 <-> v16 upgrade.
-after_migrate = "frappe_desk_theme.compat.apply_version_compatibility"
+# after_install = "frappe_desk_theme.install.after_install"
 
 # Uninstallation
 # ------------
