@@ -52,7 +52,9 @@ class FrappeDeskTheme {
 
 	/**
 	 * Initialize the theme system
-	 * First applies cached theme immediately, then loads fresh data if needed
+	 * Paints the cached theme immediately, then always revalidates against the
+	 * server (stale-while-revalidate) so a saved Desk Theme change shows up on
+	 * the next page load
 	 * Uses async/await pattern with graceful error handling
 	 */
 	async init() {
@@ -60,15 +62,29 @@ class FrappeDeskTheme {
 			// Apply cached theme immediately to prevent flickering
 			this.applyCachedTheme();
 
-			// Load fresh theme data if needed (async)
-			await this.loadThemeIfNeeded();
+			// A valid cache has already populated themeData, so listeners can be
+			// wired straight away instead of waiting on the revalidation below.
+			// Without a cache we keep the original ordering and wire them after
+			// the fetch, so the MutationObserver never runs before theme data
+			// exists - the methods it calls assume it is there.
+			const paintedFromCache = !!this.themeData;
+			if (paintedFromCache) {
+				this.setupEventListeners();
+			}
+
+			// Always revalidate. Skipping this while the cache was still "valid"
+			// meant a Desk Theme change stayed invisible for up to the 30-day
+			// cache lifetime - and the login page has no Clear Cache button.
+			await this.loadTheme();
 
 			// Apply fresh theme if we got new data
 			if (this.themeData) {
 				this.applyTheme();
 			}
 
-			this.setupEventListeners();
+			if (!paintedFromCache) {
+				this.setupEventListeners();
+			}
 		} catch (error) {
 			// Production-ready silent fail - apply default theme and show login box
 			this.applyTheme();
@@ -91,10 +107,12 @@ class FrappeDeskTheme {
 
 	/**
 	 * Apply cached theme immediately to prevent UI flickering
+	 * Only paints a cache that is still within its lifetime - anything older is
+	 * left to the revalidation fetch in init()
 	 */
 	applyCachedTheme() {
 		const cachedData = this.getCachedTheme();
-		if (cachedData && cachedData.data) {
+		if (cachedData && cachedData.data && this.isCacheValid()) {
 			this.themeData = cachedData.data;
 			this.applyTheme();
 		} else {
@@ -145,18 +163,6 @@ class FrappeDeskTheme {
 		const cacheAge = now - cachedData.timestamp;
 
 		return cacheAge < this.cacheTimeout; // 30 days
-	}
-
-	/**
-	 * Load theme only if cache is invalid or doesn't exist
-	 */
-	async loadThemeIfNeeded() {
-		// Skip API call if cache is still valid
-		if (this.isCacheValid()) {
-			return;
-		}
-
-		await this.loadTheme();
 	}
 
 	/**
