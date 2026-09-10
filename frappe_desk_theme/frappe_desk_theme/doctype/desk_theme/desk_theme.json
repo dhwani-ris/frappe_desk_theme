@@ -74,6 +74,7 @@
   "column_break_xskf",
   "table_head_text_color",
   "table_body_text_color",
+  "wrap_child_table_headers",
   "disable_card_view_on_mobile_view",
   "disable_flex_card_content_on_mobile_view",
   "widgets_tab",
@@ -301,6 +302,13 @@
    "fieldname": "table_body_text_color",
    "fieldtype": "Color",
    "label": "Body Text Color"
+  },
+  {
+   "default": "0",
+   "description": "Let a long child-table column label wrap onto up to three lines instead of being cut off. Labels longer than three lines are still truncated, with the full text on hover.",
+   "fieldname": "wrap_child_table_headers",
+   "fieldtype": "Check",
+   "label": "Wrap Child Table Headers"
   },
   {
    "fieldname": "column_break_xskf",

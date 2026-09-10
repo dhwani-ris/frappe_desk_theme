@@ -15,6 +15,9 @@ const MUTED_TEXT_VARIABLES = [
 	"--ink-gray-6",
 ];
 
+/** Body class that opts a site into wrapped child-table column headers. */
+const WRAP_GRID_HEADERS_CLASS = "fdt-wrap-grid-headers";
+
 /**
  * FrappeDeskTheme - Main theme management class
  * Handles loading, applying, and managing custom theme configurations for Frappe Desk
@@ -378,6 +381,8 @@ class FrappeDeskTheme {
 		cssVariables.forEach((variable) => {
 			root.style.removeProperty(variable);
 		});
+
+		document.body.classList.remove(WRAP_GRID_HEADERS_CLASS);
 	}
 
 	/**
@@ -650,6 +655,13 @@ class FrappeDeskTheme {
 				root.style.setProperty(variable, theme.muted_text_color);
 			});
 		}
+
+		// Child-table header wrapping is layout, not colour, so it rides a body class
+		// instead of a custom property.
+		document.body.classList.toggle(
+			WRAP_GRID_HEADERS_CLASS,
+			!!theme.wrap_child_table_headers
+		);
 
 		// Sidebar customization
 		if (theme.sidebar_background_color) {
