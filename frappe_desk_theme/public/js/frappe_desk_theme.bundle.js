@@ -1,4 +1,24 @@
 /**
+ * Frappe's own muted-text tokens, driven by the "Muted Text Color" setting.
+ * These are Frappe's variables, not this app's private namespace -- Frappe uses
+ * them across field descriptions, read-only values, child-table headers,
+ * timestamps, empty states and sidebar sub-items, so setting them once darkens
+ * all of it. Kept in one place because setCSSVariables() sets them and
+ * clearCSSVariables() must remove exactly the same list.
+ */
+const MUTED_TEXT_VARIABLES = [
+	"--text-muted",
+	"--text-light",
+	"--disabled-text-color",
+	"--ink-gray-4",
+	"--ink-gray-5",
+	"--ink-gray-6",
+];
+
+/** Body class that opts a site into wrapped child-table column headers. */
+const WRAP_GRID_HEADERS_CLASS = "fdt-wrap-grid-headers";
+
+/**
  * FrappeDeskTheme - Main theme management class
  * Handles loading, applying, and managing custom theme configurations for Frappe Desk
  * Supports dynamic theme changes, user role-based hiding, and real-time DOM updates
@@ -354,12 +374,15 @@ class FrappeDeskTheme {
 			"--footer-link-hover-color",
 			"--carousel-fade-opacity",
 			"--login-bg-carousel-image",
+			...MUTED_TEXT_VARIABLES,
 		];
 
 		// Remove each CSS variable from document root
 		cssVariables.forEach((variable) => {
 			root.style.removeProperty(variable);
 		});
+
+		document.body.classList.remove(WRAP_GRID_HEADERS_CLASS);
 	}
 
 	/**
@@ -619,6 +642,26 @@ class FrappeDeskTheme {
 		if (theme.main_body_content_box_text_color) {
 			root.style.setProperty("--content-text-color", theme.main_body_content_box_text_color);
 		}
+
+		// Muted text: map onto Frappe's OWN tokens rather than this app's private
+		// namespace. Frappe paints field descriptions, read-only values, child-table
+		// headers, timestamps and empty states from these, so one setting reaches all
+		// of them. --text-color and --heading-color are deliberately left alone: they
+		// already resolve dark (#383838 / #171717) and overriding them would flatten
+		// the heading/body hierarchy.
+		// Guarded on a non-empty value so a site that has not set it is untouched.
+		if (theme.muted_text_color) {
+			MUTED_TEXT_VARIABLES.forEach((variable) => {
+				root.style.setProperty(variable, theme.muted_text_color);
+			});
+		}
+
+		// Child-table header wrapping is layout, not colour, so it rides a body class
+		// instead of a custom property.
+		document.body.classList.toggle(
+			WRAP_GRID_HEADERS_CLASS,
+			!!theme.wrap_child_table_headers
+		);
 
 		// Sidebar customization
 		if (theme.sidebar_background_color) {

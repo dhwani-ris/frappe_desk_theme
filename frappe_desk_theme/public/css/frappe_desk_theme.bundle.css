@@ -986,3 +986,43 @@ body.has-sticky-footer:not(:has(.main-section)) {
     right: 20px;
 }
 
+
+/* ==========================================================================
+   Wrapped child-table column headers  (opt-in: "Wrap Child Table Headers")
+   ==========================================================================
+   Frappe truncates grid header labels: the text sits in
+   `.static-area.ellipsis` (frappe/public/js/frappe/form/grid_row.js), and
+   `.ellipsis` is Frappe's global white-space:nowrap + text-overflow:ellipsis
+   utility. Releasing white-space alone is not enough -- `.grid-heading-row`
+   carries a fixed `height: 32px` (frappe/public/scss/common/grid.scss), so a
+   second line would be clipped. Both have to give.
+
+   Frappe's own wrap class, `grid-overflow-no-ellipsis`, is not reusable here:
+   it is applied only to DATA cells of Text/Small Text fields, never to the
+   header row.
+
+   Capped at three lines so grids on a form stay vertically aligned; anything
+   longer still ellipsises, and Frappe's own `title` attribute keeps the full
+   label available on hover. Everything is scoped under the body class, so a
+   site that has not enabled the setting is completely untouched.
+   ========================================================================== */
+body.fdt-wrap-grid-headers .form-grid .grid-heading-row {
+	height: auto !important;
+	min-height: 32px;
+}
+
+body.fdt-wrap-grid-headers .form-grid .grid-heading-row .grid-static-col {
+	height: auto !important;
+	display: flex;
+	align-items: center;
+}
+
+body.fdt-wrap-grid-headers .form-grid .grid-heading-row .static-area.ellipsis {
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 1.3;
+}
