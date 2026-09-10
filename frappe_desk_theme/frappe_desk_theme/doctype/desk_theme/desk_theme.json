@@ -52,6 +52,7 @@
   "column_break_ojdd",
   "main_body_content_box_background_color",
   "main_body_content_box_text_color",
+  "muted_text_color",
   "sidebar_tab",
   "sidebar_section",
   "sidebar_background_color",
@@ -437,6 +438,12 @@
    "fieldname": "main_body_content_box_text_color",
    "fieldtype": "Color",
    "label": "Text Color"
+  },
+  {
+   "description": "Overrides Frappe's muted text tokens app-wide (field descriptions, read-only values, child-table headers, timestamps, empty states). Leave blank to keep Frappe's defaults.",
+   "fieldname": "muted_text_color",
+   "fieldtype": "Color",
+   "label": "Muted Text Color"
   },
   {
    "fieldname": "sidebar_section",
