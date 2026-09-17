@@ -658,10 +658,7 @@ class FrappeDeskTheme {
 
 		// Child-table header wrapping is layout, not colour, so it rides a body class
 		// instead of a custom property.
-		document.body.classList.toggle(
-			WRAP_GRID_HEADERS_CLASS,
-			!!theme.wrap_child_table_headers
-		);
+		document.body.classList.toggle(WRAP_GRID_HEADERS_CLASS, !!theme.wrap_child_table_headers);
 
 		// Sidebar customization
 		if (theme.sidebar_background_color) {
