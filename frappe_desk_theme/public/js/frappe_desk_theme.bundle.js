@@ -876,9 +876,16 @@ class FrappeDeskTheme {
 		if (sidebar.__fixed_sidebar_patched) {
 			return;
 		}
-		sidebar.__fixed_sidebar_patched = true;
 
 		const fixedSidebarLabel = this.themeData.fixed_sidebar;
+
+		// Frappe 16.52+ keys sidebars by app shell (frappe.boot.module_sidebars), not by
+		// Workspace Sidebar name. Pinning a name the boot does not carry renders
+		// "No Sidebar Items" on every page, so leave Frappe's own shell choice alone.
+		if (!this.isKnownSidebar(fixedSidebarLabel)) {
+			return;
+		}
+		sidebar.__fixed_sidebar_patched = true;
 
 		// Override sidebar switching methods to always use the configured sidebar
 		sidebar.set_workspace_sidebar = function () {
@@ -902,6 +909,19 @@ class FrappeDeskTheme {
 		} catch (e) {
 			// Silent fail – sidebar might not be fully initialised yet
 		}
+	}
+
+	/**
+	 * Whether this Frappe build can render the sidebar named `label`:
+	 * `workspace_sidebar_item` (lower-cased keys) before 16.52, `module_sidebars` from 16.52.
+	 */
+	isKnownSidebar(label) {
+		if (!label || !frappe.boot) {
+			return false;
+		}
+		const legacy = frappe.boot.workspace_sidebar_item || {};
+		const shells = frappe.boot.module_sidebars || {};
+		return Boolean(legacy[label.toLowerCase()] || shells[label]);
 	}
 
 	/**
