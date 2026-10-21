@@ -30,6 +30,7 @@
   "navbar_color",
   "column_break_jevx",
   "navbar_text_color",
+  "navbar_breadcrumb_disabled_color",
   "buttons_tab",
   "primary_button_section",
   "button_background_color",
@@ -109,6 +110,12 @@
    "fieldname": "navbar_text_color",
    "fieldtype": "Color",
    "label": "Text Color"
+  },
+  {
+   "description": "Colour of the last (current) breadcrumb item in the navbar",
+   "fieldname": "navbar_breadcrumb_disabled_color",
+   "fieldtype": "Color",
+   "label": "Breadcrumb Disabled Color"
   },
   {
    "fieldname": "column_break_jevx",
@@ -562,7 +569,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-02 17:01:54.837120",
+ "modified": "2026-10-21 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Frappe Desk Theme",
  "name": "Desk Theme",
