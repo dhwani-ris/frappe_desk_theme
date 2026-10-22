@@ -239,3 +239,6 @@ app_include_icons = "/assets/frappe_desk_theme/icons.svg"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+# Theme cache freshness: see frappe_desk_theme.api.boot_session
+boot_session = "frappe_desk_theme.api.boot_session"

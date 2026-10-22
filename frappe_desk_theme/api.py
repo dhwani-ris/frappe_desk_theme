@@ -31,3 +31,10 @@ def get_footer_html():
 	except Exception as e:
 		frappe.log_error(f"Error rendering footer template: {e!s}")
 		return ""
+
+
+def boot_session(bootinfo):
+	"""Desk Theme's last-modified time, so the browser copy of the theme is refreshed
+	as soon as the theme is saved (see isCacheValid in frappe_desk_theme.bundle.js)."""
+	modified = frappe.db.get_value("Desk Theme", "Desk Theme", "modified")
+	bootinfo.desk_theme_modified = str(modified) if modified else None

@@ -112,6 +112,13 @@ class FrappeDeskTheme {
 		const cachedData = this.getCachedTheme();
 		if (!cachedData) return false;
 
+		// Desk pages get the Desk Theme's last-modified time in boot (boot_session hook):
+		// a saved theme reaches every user on their next page load.
+		const savedAt = typeof frappe !== "undefined" && frappe.boot && frappe.boot.desk_theme_modified;
+		if (savedAt && (!cachedData.data || cachedData.data.modified !== savedAt)) {
+			return false;
+		}
+
 		const now = Date.now();
 		const cacheAge = now - cachedData.timestamp;
 
@@ -784,37 +791,30 @@ class FrappeDeskTheme {
 			return;
 		}
 
-		const sidebar = frappe.app.sidebar;
-
-		// Only patch once
-		if (sidebar.__fixed_sidebar_patched) {
+		// Called on every DOM change: set up once, then follow page changes, using
+		// Frappe's own sidebar.setup() (no override of its methods)
+		if (this.fixedSidebarListening) {
 			return;
 		}
-		sidebar.__fixed_sidebar_patched = true;
+		this.fixedSidebarListening = true;
+		// Frappe picks its own sidebar on the same events; run right after it.
+		$(document).on("page-change form-refresh", () => setTimeout(() => this.showFixedSidebar()));
+		this.showFixedSidebar();
+	}
 
-		const fixedSidebarLabel = this.themeData.fixed_sidebar;
-
-		// Override sidebar switching methods to always use the configured sidebar
-		sidebar.set_workspace_sidebar = function () {
-			this.setup(fixedSidebarLabel);
-			this.set_active_workspace_item();
-		};
-
-		sidebar.show_sidebar_for_module = function () {
-			// No-op: keep using the fixed sidebar
+	showFixedSidebar() {
+		const label = this.themeData && this.themeData.fixed_sidebar;
+		const sidebar = typeof frappe !== "undefined" && frappe.app && frappe.app.sidebar;
+		if (!label || !sidebar) {
 			return;
-		};
-
-		sidebar.set_sidebar_for_page = function () {
-			this.setup(fixedSidebarLabel);
-		};
-
-		// Apply immediately for current page if possible
+		}
 		try {
-			sidebar.setup(fixedSidebarLabel);
+			if (sidebar.sidebar_title !== label) {
+				sidebar.setup(label);
+			}
 			sidebar.set_active_workspace_item();
 		} catch (e) {
-			// Silent fail – sidebar might not be fully initialised yet
+			// Sidebar might not be fully initialised yet
 		}
 	}
 
@@ -1257,43 +1257,9 @@ if (document.readyState === "loading") {
 	// DOM is still loading, wait for DOMContentLoaded event
 	document.addEventListener("DOMContentLoaded", () => {
 		window.frappeDeskTheme = new FrappeDeskTheme();
-		// Hook into Frappe's reload / clear cache button to also refresh theme
-		attachFrappeReloadThemeHook();
 	});
 } else {
 	// DOM is already loaded, initialize immediately
 	window.frappeDeskTheme = new FrappeDeskTheme();
-	attachFrappeReloadThemeHook();
 }
 
-/**
- * Attach a hook so that when the user clicks Frappe's
- * "Reload / Clear Cache" button, the desk theme cache
- * is cleared and refreshed as well.
- */
-function attachFrappeReloadThemeHook() {
-	if (typeof frappe === "undefined") return;
-	if (!frappe.ui || !frappe.ui.toolbar || !frappe.ui.toolbar.clear_cache) return;
-
-	// Avoid double-wrapping
-	if (frappe.ui.toolbar.__theme_reload_hooked) {
-		return;
-	}
-	frappe.ui.toolbar.__theme_reload_hooked = true;
-
-	const originalClearCache = frappe.ui.toolbar.clear_cache;
-
-	frappe.ui.toolbar.clear_cache = function () {
-		try {
-			if (window.frappeDeskTheme) {
-				// Clear local theme cache and force a fresh fetch
-				window.frappeDeskTheme.clearCache();
-				window.frappeDeskTheme.refreshTheme();
-			}
-		} catch (e) {
-			// Ignore theme errors; still allow core clear_cache to run
-		}
-
-		return originalClearCache.apply(this, arguments);
-	};
-}
