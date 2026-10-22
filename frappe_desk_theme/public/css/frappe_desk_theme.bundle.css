@@ -49,7 +49,6 @@
     transition: opacity 0.7s;
 }
 
-
 /* Login form buttons - primary action buttons with hover states */
 .btn-primary.btn-login,
 .btn-primary.btn-forgot {
@@ -413,6 +412,12 @@ button.navbar-toggler {
     color: var(--breadcrumb-disabled-color, var(--navbar-color, #6c757d)) !important;
 }
 
+/* Frappe 16.52+ has no separate page title: the last crumb (a span, not a link) is the title,
+   so it takes the navbar text colour. */
+.page-head .navbar-breadcrumbs li:last-child span.es-breadcrumbs__item {
+    color: var(--navbar-color, #555) !important;
+}
+
 /* Sidebar toggle in page head - match navbar color */
 .page-head .sidebar-toggle-btn.navbar-brand,
 .page-head .sidebar-toggle-btn.navbar-brand svg,
@@ -481,6 +486,14 @@ button.navbar-toggler {
 .es-button:not([data-variant]):not([data-theme]) svg use {
     stroke: var(--btn-secondary-color);
     fill: var(--btn-secondary-color);
+}
+
+/* Outline icons (.icon, e.g. refresh) are drawn by stroke only; a fill paints them solid. */
+.btn-default svg.icon:not(.es-icon),
+.btn-default svg.icon:not(.es-icon) use,
+.es-button:not([data-variant]):not([data-theme]) svg.icon:not(.es-icon),
+.es-button:not([data-variant]):not([data-theme]) svg.icon:not(.es-icon) use {
+    fill: var(--icon-fill);
 }
 .btn.btn-default.icon-btn,
 .btn.btn-default.ellipsis,

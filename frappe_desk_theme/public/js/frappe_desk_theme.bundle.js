@@ -822,14 +822,16 @@ class FrappeDeskTheme {
 	 * Hides search bar if current user's role matches hide_search configuration
 	 */
 	toggleSearchBar() {
-		const searchBar = document.querySelector(".input-group.search-bar.text-muted");
-		if (!searchBar) {
+		if (!this.getUserRoles()) {
 			return;
 		}
 
-		if (this.getUserRoles()) {
-			searchBar.style.display = "none";
-		}
+		// The navbar search box before 16.52; the sidebar and page-head search buttons from 16.52.
+		document
+			.querySelectorAll(".input-group.search-bar.text-muted, .navbar-modal-search-mobile")
+			.forEach((searchBar) => {
+				searchBar.style.display = "none";
+			});
 	}
 
 	/**
@@ -879,13 +881,12 @@ class FrappeDeskTheme {
 
 		const fixedSidebarLabel = this.themeData.fixed_sidebar;
 
-		// Frappe 16.52+ keys sidebars by app shell (frappe.boot.module_sidebars), not by
-		// Workspace Sidebar name. Pinning a name the boot does not carry renders
-		// "No Sidebar Items" on every page, so leave Frappe's own shell choice alone.
-		if (!this.isKnownSidebar(fixedSidebarLabel)) {
+		sidebar.__fixed_sidebar_patched = true;
+
+		if (frappe.boot.module_sidebars) {
+			this.pinAppShell(sidebar, fixedSidebarLabel);
 			return;
 		}
-		sidebar.__fixed_sidebar_patched = true;
 
 		// Override sidebar switching methods to always use the configured sidebar
 		sidebar.set_workspace_sidebar = function () {
@@ -912,16 +913,27 @@ class FrappeDeskTheme {
 	}
 
 	/**
-	 * Whether this Frappe build can render the sidebar named `label`:
-	 * `workspace_sidebar_item` (lower-cased keys) before 16.52, `module_sidebars` from 16.52.
+	 * Frappe 16.52+ switches the sidebar per app shell (frappe.boot.module_sidebars) from the
+	 * router, the dock and workspaces, all through sidebar.setup(). Pin every one of those calls
+	 * to one shell. A Workspace Sidebar name (e.g. "Dashboard") is not a shell, so it falls back
+	 * to the user's home shell instead of rendering "No Sidebar Items".
 	 */
-	isKnownSidebar(label) {
-		if (!label || !frappe.boot) {
-			return false;
+	pinAppShell(sidebar, label) {
+		const shells = frappe.boot.module_sidebars;
+		const shell = shells[label] ? label : frappe.boot.home_shell;
+		if (!shell || !shells[shell]) {
+			return;
 		}
-		const legacy = frappe.boot.workspace_sidebar_item || {};
-		const shells = frappe.boot.module_sidebars || {};
-		return Boolean(legacy[label.toLowerCase()] || shells[label]);
+
+		const setup = sidebar.setup;
+		sidebar.setup = function () {
+			return setup.call(this, shell);
+		};
+
+		if (sidebar.current_module !== shell) {
+			sidebar.setup(shell);
+			sidebar.highlight_active_item?.();
+		}
 	}
 
 	/**
