@@ -934,6 +934,27 @@ class FrappeDeskTheme {
 			sidebar.setup(shell);
 			sidebar.highlight_active_item?.();
 		}
+		this.disableSidebarHeaderMenu(sidebar.sidebar_header);
+	}
+
+	/**
+	 * The 16.52 header menu (Modules, Apps, Edit Sidebar, Help) switches or edits the sidebar,
+	 * which a pinned sidebar must not do. Unbind the menu already on the header and stop the
+	 * dock rail's copy from attaching.
+	 */
+	disableSidebarHeaderMenu(header) {
+		if (!header) {
+			return;
+		}
+
+		header.attach_menu = () => null;
+
+		const trigger = header.menu?.trigger_el;
+		if (trigger) {
+			trigger.removeEventListener("pointerdown", header.menu.onpointerdown);
+			trigger.removeEventListener("click", header.menu.onclick);
+			trigger.removeEventListener("keydown", header.menu.onkeydown);
+		}
 	}
 
 	/**
