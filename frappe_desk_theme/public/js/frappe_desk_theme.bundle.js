@@ -666,6 +666,7 @@ class FrappeDeskTheme {
 		this.setCSSVariables();
 		this.toggleSidebar();
 		this.toggleSearchBar();
+		this.hideNotification();
 		this.hideStandardMenu();
 		this.applyFixedSidebarBehavior();
 		this.performInitialSidebarLoginRedirect();
@@ -718,14 +719,31 @@ class FrappeDeskTheme {
 	 * Hides search bar if current user's role matches hide_search configuration
 	 */
 	toggleSearchBar() {
-		const searchBar = document.querySelector(".input-group.search-bar.text-muted");
-		if (!searchBar) {
+		if (!this.getUserRoles()) {
 			return;
 		}
+		// v15 navbar search box, and v16's "Search" item in the sidebar
+		document
+			.querySelectorAll(".input-group.search-bar.text-muted, .body-sidebar .navbar-search-bar")
+			.forEach((el) => {
+				el.style.display = "none";
+			});
+	}
 
-		if (this.getUserRoles()) {
-			searchBar.style.display = "none";
+	/**
+	 * Hide the notification bell / sidebar "Notification" item
+	 * Uses the 'hide_notification' flag from Desk Theme doctype
+	 */
+	hideNotification() {
+		if (!this.themeData || !this.themeData.hide_notification) {
+			return;
 		}
+		// v15 navbar dropdown, and v16's "Notification" item in the sidebar
+		document
+			.querySelectorAll(".navbar .dropdown-notifications, .body-sidebar .sidebar-notification")
+			.forEach((el) => {
+				el.style.display = "none";
+			});
 	}
 
 	/**
@@ -1095,6 +1113,7 @@ class FrappeDeskTheme {
 		let footerTimeout;
 		const observer = new MutationObserver(() => {
 			this.toggleSearchBar();
+			this.hideNotification();
 			this.hideStandardMenu();
 			this.applyFixedSidebarBehavior();
 			this.performInitialSidebarLoginRedirect();
