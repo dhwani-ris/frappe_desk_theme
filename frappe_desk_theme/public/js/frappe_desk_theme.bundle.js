@@ -822,14 +822,16 @@ class FrappeDeskTheme {
 	 * Hides search bar if current user's role matches hide_search configuration
 	 */
 	toggleSearchBar() {
-		const searchBar = document.querySelector(".input-group.search-bar.text-muted");
-		if (!searchBar) {
+		if (!this.getUserRoles()) {
 			return;
 		}
 
-		if (this.getUserRoles()) {
-			searchBar.style.display = "none";
-		}
+		// The navbar search box before 16.52; the sidebar and page-head search buttons from 16.52.
+		document
+			.querySelectorAll(".input-group.search-bar.text-muted, .navbar-modal-search-mobile")
+			.forEach((searchBar) => {
+				searchBar.style.display = "none";
+			});
 	}
 
 	/**
@@ -876,9 +878,15 @@ class FrappeDeskTheme {
 		if (sidebar.__fixed_sidebar_patched) {
 			return;
 		}
-		sidebar.__fixed_sidebar_patched = true;
 
 		const fixedSidebarLabel = this.themeData.fixed_sidebar;
+
+		sidebar.__fixed_sidebar_patched = true;
+
+		if (frappe.boot.module_sidebars) {
+			this.pinAppShell(sidebar, fixedSidebarLabel);
+			return;
+		}
 
 		// Override sidebar switching methods to always use the configured sidebar
 		sidebar.set_workspace_sidebar = function () {
@@ -901,6 +909,51 @@ class FrappeDeskTheme {
 			sidebar.set_active_workspace_item();
 		} catch (e) {
 			// Silent fail – sidebar might not be fully initialised yet
+		}
+	}
+
+	/**
+	 * Frappe 16.52+ switches the sidebar per app shell (frappe.boot.module_sidebars) from the
+	 * router, the dock and workspaces, all through sidebar.setup(). Pin every one of those calls
+	 * to one shell. A Workspace Sidebar name (e.g. "Dashboard") is not a shell, so it falls back
+	 * to the user's home shell instead of rendering "No Sidebar Items".
+	 */
+	pinAppShell(sidebar, label) {
+		const shells = frappe.boot.module_sidebars;
+		const shell = shells[label] ? label : frappe.boot.home_shell;
+		if (!shell || !shells[shell]) {
+			return;
+		}
+
+		const setup = sidebar.setup;
+		sidebar.setup = function () {
+			return setup.call(this, shell);
+		};
+
+		if (sidebar.current_module !== shell) {
+			sidebar.setup(shell);
+			sidebar.highlight_active_item?.();
+		}
+		this.disableSidebarHeaderMenu(sidebar.sidebar_header);
+	}
+
+	/**
+	 * The 16.52 header menu (Modules, Apps, Edit Sidebar, Help) switches or edits the sidebar,
+	 * which a pinned sidebar must not do. Unbind the menu already on the header and stop the
+	 * dock rail's copy from attaching.
+	 */
+	disableSidebarHeaderMenu(header) {
+		if (!header) {
+			return;
+		}
+
+		header.attach_menu = () => null;
+
+		const trigger = header.menu?.trigger_el;
+		if (trigger) {
+			trigger.removeEventListener("pointerdown", header.menu.onpointerdown);
+			trigger.removeEventListener("click", header.menu.onclick);
+			trigger.removeEventListener("keydown", header.menu.onkeydown);
 		}
 	}
 
