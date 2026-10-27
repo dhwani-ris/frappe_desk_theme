@@ -24,16 +24,17 @@ app_license = "mit"
 # Includes in <head>
 # ------------------
 # include js, css files in header of desk.html
-app_include_css = "/assets/frappe_desk_theme/css/frappe_desk_theme.bundle.css"
-# app_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
+# Bundle names, not /assets paths: Frappe then serves the hashed dist file, so each release
+# changes the URL. The fixed paths were served immutable for a year, and browsers kept old files.
+app_include_css = "frappe_desk_theme.bundle.css"
 
 app_include_js = [
-	"/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js",
-	"/assets/frappe_desk_theme/js/sidebar/sidebar_override.bundle.js",
+	"frappe_desk_theme.bundle.js",
+	"sidebar_override.bundle.js",
 ]
 # include js, css files in header of web template
-web_include_css = "/assets/frappe_desk_theme/css/frappe_desk_theme.bundle.css"
-web_include_js = "/assets/frappe_desk_theme/js/frappe_desk_theme.bundle.js"
+web_include_css = "frappe_desk_theme.bundle.css"
+web_include_js = "frappe_desk_theme.bundle.js"
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "frappe_desk_theme/public/scss/website"
