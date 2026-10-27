@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Get workflow run details and notify
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Check for new release
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
