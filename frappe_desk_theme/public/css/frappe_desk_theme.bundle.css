@@ -482,6 +482,7 @@ button.navbar-toggler {
 .btn.btn-default.ellipsis svg,
 .btn-default svg,
 .btn-default svg use,
+.btn.filter-button.btn-primary-light svg,
 .es-button:not([data-variant]):not([data-theme]) svg,
 .es-button:not([data-variant]):not([data-theme]) svg use {
     stroke: var(--btn-secondary-color);
@@ -495,10 +496,16 @@ button.navbar-toggler {
 .es-button:not([data-variant]):not([data-theme]) svg.icon:not(.es-icon) use {
     fill: var(--icon-fill);
 }
+/* `.btn.btn-default` matches Frappe 16.53's own `.btn.btn-default` (control-bg), which would
+   otherwise outrank `.btn-default` and leave filter, sort and attach buttons grey.
+   The list Filters button is `btn-primary-light`, so it is named here too. */
+.btn.btn-default,
+.btn.btn-default:active,
 .btn.btn-default.icon-btn,
 .btn.btn-default.ellipsis,
 .btn-default,
 .btn-default:active,
+.btn.filter-button.btn-primary-light,
 .es-button:not([data-variant]):not([data-theme]),
 .es-button:not([data-variant]):not([data-theme]):active {
     background-color: var(--btn-secondary-bg,#f3f3f3);
@@ -506,9 +513,11 @@ button.navbar-toggler {
 }
 
 /* Secondary button hover effects - fallback to secondary when not set in theme */
+.btn.btn-default:hover,
 .btn.btn-default.icon-btn:hover,
 .btn.btn-default.ellipsis:hover,
 .btn-default:hover,
+.btn.filter-button.btn-primary-light:hover,
 .es-button:not([data-variant]):not([data-theme]):hover {
     background-color: var(--btn-secondary-hover-bg, var(--btn-secondary-bg, #f3f3f3));
     color: var(--btn-secondary-hover-color, var(--btn-secondary-color, inherit));
@@ -802,9 +811,10 @@ div.level-right {
 }
 
 /* Table rows - data rows with customizable background and text colors */
+/* Frappe 16.53 status badges are `.es-badge.filterable.ellipsis`; they keep their own colour. */
 .level.list-row,
 .level-item.bold.ellipsis a,
-.filterable.ellipsis {
+.filterable.ellipsis:not(.es-badge) {
     background-color: var(--table-body-bg);
     color: var(--table-body-color);
 }
@@ -836,6 +846,11 @@ div.level-right {
     background-color: var(--widget-bg);
     border: 2px solid var(--widget-border);
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Workspace link cards (e.g. Reports) lost their border in Frappe 16.53. */
+.widget.links-widget-box {
+    border: 1px solid var(--widget-border);
 }
 
 /* Widget content - all text elements within widgets */
