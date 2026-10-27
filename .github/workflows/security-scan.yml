@@ -39,20 +39,20 @@ jobs:
     # JS/TS CodeQL rarely finds issues beyond what Semgrep catches in code-quality.
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@4bfa242aa49c5f7c6770b98670d354a7dfac05f8  # v3
         with:
           languages: python
           queries: security-extended
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@4bfa242aa49c5f7c6770b98670d354a7dfac05f8  # v3
 
       - name: Perform CodeQL Analysis
         id: codeql-analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@4bfa242aa49c5f7c6770b98670d354a7dfac05f8  # v3
         continue-on-error: true
         with:
           category: "/language:python"
@@ -70,15 +70,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: '3.13'
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-security-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
@@ -95,7 +95,7 @@ jobs:
           bandit -r . -f json -o bandit-report.json --exclude ./.git,./node_modules,./frappe-bench || true
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: security-reports-${{ github.run_id }}
           path: |
@@ -111,7 +111,7 @@ jobs:
 
     steps:
       - name: Generate Security Summary
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
