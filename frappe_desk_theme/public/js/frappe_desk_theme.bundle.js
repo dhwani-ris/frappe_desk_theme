@@ -810,6 +810,12 @@ class FrappeDeskTheme {
 			return;
 		}
 
+		// Below md the sidebar is a drawer that Frappe opens from the navbar and starts shut.
+		// Adding 'expanded' here would open it on every load without Frappe's own state knowing.
+		if (frappe.is_mobile?.()) {
+			return;
+		}
+
 		if (this.themeData.hide_side_bar === 0) {
 			sidebarContainer.classList.add("expanded");
 		} else {
