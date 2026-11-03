@@ -559,6 +559,18 @@ body {
     color: var(--sidebar-text-color,#525252) !important;
 }
 
+/* Below md the sidebar is a drawer over the page. Frappe hides a closed drawer by
+   making the panel transparent and fading its contents. The !important background
+   above would keep an empty 224px panel painted over the page and the navbar
+   hamburger, so give the closed drawer its transparent background back. */
+@media (max-width: 767.98px) {
+    .body-sidebar-container:not(.expanded) .body-sidebar {
+        background-color: transparent !important;
+        border-right-color: transparent !important;
+        box-shadow: none !important;
+    }
+}
+
 .body-sidebar .body-sidebar-top{
     scrollbar-width: none;
 }
