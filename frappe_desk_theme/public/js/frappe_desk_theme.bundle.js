@@ -906,8 +906,26 @@ class FrappeDeskTheme {
 	performInitialSidebarLoginRedirect() {
 		// Only run once per browser tab (use sessionStorage so it persists across reloads)
 		const redirectFlagKey = "frappe_desk_theme_sidebar_redirect_done";
+
+		// The flag must not outlive the login it belongs to: sessionStorage survives
+		// logout/login in the same tab (and is copied into tabs opened from it, e.g.
+		// an email login link), so a stale "done" flag used to skip the redirect for
+		// every later login. On the login page the flag is dropped; elsewhere it only
+		// counts if it was set by the same user.
+		const onLoginPage =
+			document.body.classList.contains("login-page") || document.querySelector("#page-login");
+		if (onLoginPage) {
+			try {
+				sessionStorage.removeItem(redirectFlagKey);
+			} catch (e) {
+				// Ignore storage errors
+			}
+			this.didInitialSidebarLoginRedirect = false;
+			return;
+		}
+		const currentUser = (typeof frappe !== "undefined" && frappe.session && frappe.session.user) || "";
 		try {
-			if (sessionStorage.getItem(redirectFlagKey) === "1") {
+			if (sessionStorage.getItem(redirectFlagKey) === currentUser && currentUser) {
 				return;
 			}
 		} catch (e) {
@@ -934,8 +952,11 @@ class FrappeDeskTheme {
 			return;
 		}
 
-		// Only act inside Desk
-		if (!window.location.pathname.startsWith("/desk")) {
+		// Only act inside Desk. The Desk landing screen can be served at "/" (the app
+		// selection page after a login-link login) as well as under "/desk"; the
+		// boot/sidebar checks below keep this from firing on any website page.
+		const path = window.location.pathname;
+		if (path !== "/" && !path.startsWith("/desk")) {
 			return;
 		}
 
@@ -948,7 +969,7 @@ class FrappeDeskTheme {
 		// Heuristic: only redirect from generic initial desk routes
 		// We *don't* treat specific workspace routes as initial, so reloads
 		// on "Workspaces / <Something>" won't be redirected.
-		const isInitialDeskRoute = route.length === 0 || route[0] === "desktop";
+		const isInitialDeskRoute = route.length === 0 || !route[0] || route[0] === "desktop";
 
 		if (!isInitialDeskRoute) {
 			return;
@@ -971,7 +992,7 @@ class FrappeDeskTheme {
 
 		this.didInitialSidebarLoginRedirect = true;
 		try {
-			sessionStorage.setItem(redirectFlagKey, "1");
+			sessionStorage.setItem(redirectFlagKey, currentUser);
 		} catch (e) {
 			// Ignore storage errors
 		}
