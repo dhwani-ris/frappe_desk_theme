@@ -944,19 +944,18 @@ class FrappeDeskTheme {
 			return;
 		}
 
-		// Not applicable on the login page
-		if (
-			document.body.classList.contains("login-page") ||
-			document.querySelector("#page-login")
-		) {
-			return;
-		}
-
 		// Only act inside Desk. The Desk landing screen can be served at "/" (the app
 		// selection page after a login-link login) as well as under "/desk"; the
 		// boot/sidebar checks below keep this from firing on any website page.
 		const path = window.location.pathname;
 		if (path !== "/" && !path.startsWith("/desk")) {
+			return;
+		}
+		// This bundle is also loaded on website pages (web_include_js), where "/" can be
+		// the site's home page. frappe.container only exists inside Desk, so require it
+		// for "/" (it is created before any Desk route renders, so this never delays the
+		// redirect on the real Desk landing screen).
+		if (path === "/" && !(typeof frappe !== "undefined" && frappe.container)) {
 			return;
 		}
 
